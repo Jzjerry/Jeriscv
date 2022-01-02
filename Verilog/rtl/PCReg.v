@@ -1,4 +1,4 @@
-`include "defines.v"
+`include "./defines.v"
 
 module PCReg(
     input i_clock,

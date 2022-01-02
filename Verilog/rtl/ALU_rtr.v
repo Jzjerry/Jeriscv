@@ -1,17 +1,17 @@
-`include "defines.v"
+`include "./defines.v"
 
 /* Register-to-Register ALU 
 +--------+---------------------+
 | funct3 | computation         |
 +--------+---------------------+
 | 000    | Addition            |    if (sub_sra==1): Subtraction
-| 001    | Signed Less-than    |
-| 010    | Unisigned Less-than |
-| 011    | Bitwise And         |
-| 100    | Bitwise Or          |
-| 101    | Bitwise Xor         |
-| 110    | Logical Left Shift  |
-| 111    | Logical Right Shift |    if (sub_sra==1): Arithmetic Right Shift
+| 010    | Signed Less-than    |
+| 011    | Unisigned Less-than |
+| 111    | Bitwise And         |
+| 110    | Bitwise Or          |
+| 100    | Bitwise Xor         |
+| 001    | Logical Left Shift  |
+| 101    | Logical Right Shift |    if (sub_sra==1): Arithmetic Right Shift
 +--------+---------------------+
 */
 
@@ -27,17 +27,17 @@ module ALU_rtr(
     
     always@(*)begin
         case(i_funct3)
-            `FUNCT_ADD  : o_datac = i_sub_sra ? i_dataa - i_datab
+            `FUNCT3_ADD_SUB  : o_datac = i_sub_sra ? i_dataa - i_datab
                                     : i_dataa + i_datab;
-            `FUNCT_SLT  : o_datac = (i_dataa < i_datab) ? 
+            `FUNCT3_SLT  : o_datac = (i_dataa < i_datab) ? 
                                     4'h1 : 4'h0;
-            `FUNCT_SLTU : o_datac = ($unsigend(i_dataa) < $unsigend(i_datab)) ? 
+            `FUNCT3_SLTU : o_datac = ($unsigend(i_dataa) < $unsigend(i_datab)) ? 
                                     4'h1 : 4'h0;
-            `FUNCT_AND  : o_datac = i_dataa & i_datab;
-            `FUNCT_OR   : o_datac = i_dataa | i_datab;
-            `FUNCT_XOR  : o_datac = i_dataa ^ i_datab;
-            `FUNCT_SLL  : o_datac = i_dataa << i_datab[4:0];
-            `FUNCT_SRL  : o_datac = i_sub_sra ? i_dataa >> i_datab[4:0]
+            `FUNCT3_AND  : o_datac = i_dataa & i_datab;
+            `FUNCT3_OR   : o_datac = i_dataa | i_datab;
+            `FUNCT3_XOR  : o_datac = i_dataa ^ i_datab;
+            `FUNCT3_SLL  : o_datac = i_dataa << i_datab[4:0];
+            `FUNCT3_SR   : o_datac = i_sub_sra ? i_dataa >> i_datab[4:0]
                                     : i_dataa >>> i_datab[4:0];
             default     : o_datac = 4'h0;
         endcase
