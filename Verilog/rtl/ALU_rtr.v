@@ -30,16 +30,16 @@ module ALU_rtr(
             `FUNCT3_ADD_SUB  : o_datac = i_sub_sra ? i_dataa - i_datab
                                     : i_dataa + i_datab;
             `FUNCT3_SLT  : o_datac = (i_dataa < i_datab) ? 
-                                    4'h1 : 4'h0;
-            `FUNCT3_SLTU : o_datac = ($unsigend(i_dataa) < $unsigend(i_datab)) ? 
-                                    4'h1 : 4'h0;
+                                    32'h1 : 32'h0;
+            `FUNCT3_SLTU : o_datac = ($unsigned(i_dataa) < $unsigned(i_datab)) ? 
+                                    32'h1 :32'h0;
             `FUNCT3_AND  : o_datac = i_dataa & i_datab;
             `FUNCT3_OR   : o_datac = i_dataa | i_datab;
             `FUNCT3_XOR  : o_datac = i_dataa ^ i_datab;
             `FUNCT3_SLL  : o_datac = i_dataa << i_datab[4:0];
             `FUNCT3_SR   : o_datac = i_sub_sra ? i_dataa >> i_datab[4:0]
                                     : i_dataa >>> i_datab[4:0];
-            default     : o_datac = 4'h0;
+            default     : o_datac = 32'h0;
         endcase
 
         case({i_dataa[31],i_datab[31],o_datac[31]})

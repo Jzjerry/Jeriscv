@@ -37,7 +37,7 @@ module Stage_id(
     output reg [31:0] o_reg1_data,
     output reg [31:0] o_reg2_data,
     output reg o_reg_we,
-    output reg [5:0] o_reg_wr_addr,
+    output reg [4:0] o_reg_wr_addr,
     output reg o_csr_we,
     output reg [31:0] o_csr_rdata,
     output reg [31:0] o_csr_wr_addr
