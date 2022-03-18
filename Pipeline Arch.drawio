@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2022-03-18T13:15:09.506Z" agent="5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.109 Safari/537.36 OPR/84.0.4316.31" etag="yOw4qMAXaK3KXcudj75H" version="17.1.3" type="github">
+<mxfile host="app.diagrams.net" modified="2022-03-18T13:23:02.742Z" agent="5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.109 Safari/537.36 OPR/84.0.4316.31" etag="CY5DeJYq-RvCZEylDI9S" version="17.1.3" type="github">
   <diagram id="-2yhpJCkZR2bGL4vZhdu" name="Page-1">
     <mxGraphModel dx="2253" dy="1952" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
@@ -176,20 +176,29 @@
             <mxPoint x="950" y="-3" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="5vCJ_8o0VIMFx-cSBBm2-45" value="取指阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;" vertex="1" parent="1">
+        <mxCell id="5vCJ_8o0VIMFx-cSBBm2-45" value="取指阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=20;" vertex="1" parent="1">
           <mxGeometry x="17" width="120" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="5vCJ_8o0VIMFx-cSBBm2-46" value="译码阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;" vertex="1" parent="1">
+        <mxCell id="5vCJ_8o0VIMFx-cSBBm2-46" value="译码阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=20;" vertex="1" parent="1">
           <mxGeometry x="430" width="120" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="5vCJ_8o0VIMFx-cSBBm2-47" value="执行阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;" vertex="1" parent="1">
+        <mxCell id="5vCJ_8o0VIMFx-cSBBm2-47" value="执行阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=20;" vertex="1" parent="1">
           <mxGeometry x="790" width="120" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="5vCJ_8o0VIMFx-cSBBm2-48" value="访存阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;" vertex="1" parent="1">
+        <mxCell id="5vCJ_8o0VIMFx-cSBBm2-48" value="访存阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=20;" vertex="1" parent="1">
           <mxGeometry x="970" width="120" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="5vCJ_8o0VIMFx-cSBBm2-49" value="写回阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=16;" vertex="1" parent="1">
+        <mxCell id="5vCJ_8o0VIMFx-cSBBm2-49" value="写回阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontFamily=Helvetica;fontSize=20;" vertex="1" parent="1">
           <mxGeometry x="1160" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="5vCJ_8o0VIMFx-cSBBm2-53" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;fontFamily=Helvetica;fontSize=16;fontColor=#000000;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="-130" y="410" as="sourcePoint" />
+            <mxPoint x="1300" y="410" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="5vCJ_8o0VIMFx-cSBBm2-54" value="流水线内组件" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;labelBackgroundColor=none;fontFamily=Helvetica;fontSize=20;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="-280" y="120" width="130" height="150" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
