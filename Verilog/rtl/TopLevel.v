@@ -1,6 +1,7 @@
 `include "./defines.v"
 
-module TopLevel();
+module TopLevel(
+);
     
     wire [31:0] op1;
     wire [31:0] op2;
@@ -14,6 +15,19 @@ module TopLevel();
     wire mem_enable;
     wire reg_we;
     wire [4:0] reg_wr_addr;
+	 
+	 
+	 Regfile r(
+	   .i_clock,
+		.i_readwrite,
+		.i_reset,
+		.i_readreg1,
+		.i_readreg2,
+		.i_writereg,
+		.i_writedata,
+		.o_readdata1,
+		.o_readdata2
+	 );
 
     Stage_id u1(
         // to ex
@@ -51,5 +65,6 @@ module TopLevel();
         .i_csr_rdata(csr_rdata),
         .i_csr_wr_addr(csr_wr_addr)
     );
+	 
 
 endmodule

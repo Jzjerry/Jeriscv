@@ -20,9 +20,8 @@ module ALU_rtr(
     input [31:0] i_datab,
     input i_sub_sra,
     input [2:0] i_funct3,
-    output [31:0]o_datac
+    output reg [31:0]o_datac
 );
-    reg [31:0]o_datac;
     reg overflow;/* overflow flag */
     
     always@(*)begin
@@ -42,17 +41,17 @@ module ALU_rtr(
             default     : o_datac = 32'h0;
         endcase
 
-        case({i_dataa[31],i_datab[31],o_datac[31]})
+        // case({i_dataa[31],i_datab[31],o_datac[31]})
 
-            3'b011 : overflow = i_sub_sra;
-            3'b100 : overflow = i_sub_sra;
+        //     3'b011 : overflow = i_sub_sra;
+        //     3'b100 : overflow = i_sub_sra;
             
-            3'b001 : overflow = ~i_sub_sra;
-            3'b110 : overflow = ~i_sub_sra;
+        //     3'b001 : overflow = ~i_sub_sra;
+        //     3'b110 : overflow = ~i_sub_sra;
 
-            default : overflow = 1'b0;
+        //     default : overflow = 1'b0;
 
-        endcase
+        // endcase
     end
 
 endmodule

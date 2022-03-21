@@ -8,13 +8,11 @@ module Regfile(
     input [4:0] i_readreg2,
     input [4:0] i_writereg,
     input [31:0] i_writedata,
-    output [31:0] o_readdata1,
-    output [31:0] o_readdata2
+    output reg [31:0] o_readdata1,
+    output reg [31:0] o_readdata2
 );
 
     reg [31:0] reg_data [31:0];
-    reg [31:0] o_readdata1;
-    reg [31:0] o_readdata2;
 
     // read reg 1
     always @(*) begin
