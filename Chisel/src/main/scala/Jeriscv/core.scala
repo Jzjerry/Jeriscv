@@ -5,6 +5,8 @@ package Jeriscv
 import chisel3._
 import chisel3.util._
 
-class core extends Module{
+class core(Config : JeriscvConfig) extends Module{
+
+  val IFU = Module(new InstructionFetchUnit(Config))
 
 }

@@ -1,6 +1,8 @@
 .idea/
 .bsp/
 target/
+/test_run_dir
 *.v
 *.fir
 *.json
+quartus/

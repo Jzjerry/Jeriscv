@@ -17,6 +17,24 @@ object GenDataMem{
 
 object GenALU{
   def main(args: Array[String]): Unit = {
-    (new ChiselStage).emitVerilog(new ALU(32, true))
+    (new ChiselStage).emitVerilog(new ALU(32, false))
+  }
+}
+
+object GenRegFile{
+  def main(args: Array[String]): Unit = {
+    (new ChiselStage).emitVerilog(new RegFile(32))
+  }
+}
+
+object GenIDU{
+  def main(args: Array[String]): Unit = {
+    (new ChiselStage).emitVerilog(new InstructionDecodeUnit( new JeriscvConfig ))
+  }
+}
+
+object GenIFU{
+  def main(args: Array[String]): Unit = {
+    (new ChiselStage).emitVerilog(new InstructionFetchUnit( new JeriscvConfig ))
   }
 }
