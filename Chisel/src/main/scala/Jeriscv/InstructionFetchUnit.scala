@@ -3,8 +3,9 @@ package Jeriscv
 import chisel3._
 import chisel3.util._
 
-class Fetch2DecodeInterface extends Bundle{
+class Fetch2DecodeInterface(Config : JeriscvConfig) extends Bundle{
   val InstData = UInt(32.W)
+  val InstAddr = UInt(Config.InstMemAddrWidth.W)
 }
 
 class EndToFetchInterface(Config : JeriscvConfig) extends Bundle{
@@ -16,7 +17,7 @@ class EndToFetchInterface(Config : JeriscvConfig) extends Bundle{
 class InstructionFetchUnit(Config : JeriscvConfig) extends Module {
 
   val In2F = IO(Input(new EndToFetchInterface(Config)))
-  val F2D = IO(Output(new Fetch2DecodeInterface))
+  val F2D = IO(Output(new Fetch2DecodeInterface(Config)))
 
   val InstMem = Module(new InstructionMem(Config.InstMemSrc, Config.InstNum))
 
@@ -30,6 +31,7 @@ class InstructionFetchUnit(Config : JeriscvConfig) extends Module {
     }
   }
   InstMem.io.InstAddr := ProgramCounter
+  F2D.InstAddr := ProgramCounter
   F2D.InstData := InstMem.io.InstData
 
 }

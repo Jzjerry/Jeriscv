@@ -38,3 +38,9 @@ object GenIFU{
     (new ChiselStage).emitVerilog(new InstructionFetchUnit( new JeriscvConfig ))
   }
 }
+
+object Gencore{
+  def main(args: Array[String]): Unit = {
+    (new ChiselStage).emitVerilog(new core( new JeriscvConfig ))
+  }
+}

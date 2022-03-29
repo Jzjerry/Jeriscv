@@ -10,13 +10,10 @@ class ALUTest extends AnyFlatSpec with ChiselScalatestTester {
   it should "calculate the result according to func" in{
     test( new ALU(32, false)){ dut=>
 
-      for(i <- 0 to 0xFFFFFFFF ) {
-        dut.io.op1.poke(i.U(32.W))
-        for(j <- 0 to 0xFFFFFFFF ){
-          dut.io.op2.poke(j.U(32.W))
-        //TODO: Test is not so easy to do :(
-        }
-      }
+      dut.io.funct3.poke(ALUFunct3.add)
+      dut.io.op1.poke(1.U)
+      dut.io.op2.poke(2.U)
+      println("result:" +dut.io.result.peek())
     }
   }
 }
