@@ -1,4 +1,4 @@
-module extend32
+module Extend32
 (
     input [15:0] a,
     output reg [31:0] b

@@ -3,9 +3,6 @@
 
 `define ZERO_WORD 32'h00000000
 
-`define MEM_ADDR_WIDTH 31:0
-`define MEM_DATA_WIDTH 31:0
-
 // PC Register Defines
 `define CPU_RESET_ADDR 0
 `define HOLD_PC 3'b001

@@ -1,0 +1,4 @@
+Verilog/quartus
+*.vcd
+*.bak
+wave
