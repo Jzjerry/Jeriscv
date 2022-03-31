@@ -11,5 +11,6 @@ class JeriscvConfig{
   val InstNum           : Int = 256
   val InstMemSrc        : String = ""
   val InstMemAddrWidth  : Int = log2Ceil(InstNum * 4)
-  val ALUOptimize       : Boolean = true
+  val ALUOneHotOptimize       : Boolean = true
+  val BRUOneHotOptimize       : Boolean = true
 }

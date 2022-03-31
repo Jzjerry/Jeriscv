@@ -8,19 +8,31 @@ import chisel3.experimental.ChiselEnum
 class Decode2ExecuteInterface (Config : JeriscvConfig) extends Bundle{
   val Op1  = UInt(Config.RegFileWidth.W)
   val Op2 = UInt(Config.RegFileWidth.W)
+  val BranchOffset = UInt(Config.RegFileWidth.W)
+
+  val InstAddr = UInt(Config.InstMemAddrWidth.W)
+
+
+  val ExecType   = ExecuteType()
+  val ALUFunct   = ALUFunct3()
+  val BRUFunct   = BRUFunct3()
 
   val MemoryWriteData = UInt(Config.RegFileWidth.W)
   val MemoryWriteEnable_n = Bool()
 
-  val ALUFunct   = ALUFunct3()
+  val WriteBackSrc = WriteBackType()
 }
 
-object ALUOp2Src extends ChiselEnum{
-  val rs2, imm, NextInstAddr = Value
+object WriteBackType extends ChiselEnum{
+  val ALU, NextAddr, Mem, default = Value
 }
 
-object ALUOp1Src extends ChiselEnum{
-  val rs1, zero, InstAddr = Value
+object Op2SrcType extends ChiselEnum{
+  val rs2, imm, default = Value
+}
+
+object Op1SrcType extends ChiselEnum{
+  val rs1, zero, InstAddr, default = Value
 }
 
 class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
@@ -41,9 +53,13 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   val rd = inst(11, 7)
   val opcode = inst(6, 0)
 
-  val op1src = Wire(ALUOp1Src())
-  val op2src = Wire(ALUOp2Src())
+  val exec_type = Wire(ExecuteType())
   val inst_type = Wire(InstType())
+
+  // ALU Decode
+  val op1src = Wire(Op1SrcType())
+  val op2src = Wire(Op2SrcType())
+
 
   // Immediate Generation
   val ImmTable = Array(
@@ -51,84 +67,122 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
     InstType.S_Type -> Cat(Fill(21,inst(31)), inst(30,25), inst(11,7)),
     InstType.B_Type -> Cat(Fill(20,inst(31)), inst(7), inst(30, 25), inst(11, 8), 0.U(1.W)),
     InstType.U_Type -> Cat(inst(31, 12), 0.U(12.W)),
-    InstType.J_Type -> Cat(Fill(12,inst(31)), inst(19, 12), inst(20), inst(30, 21),0.U(1.W))
+    InstType.J_Type -> Cat(Fill(12,inst(31)), inst(19, 12), inst(20), inst(30, 21), 0.U(1.W))
   )
   val immGen = Wire(UInt(32.W))
 
 
-
+  // Default Wire
   // RegFile Input
-  RegFile.io.rd_addr := rd
+  RegFile.io.rd_addr := rd  // This Wire should be delay to WB Unit
   RegFile.io.rs1_addr := rs1
   RegFile.io.rs2_addr := rs2
-  //TODO: Signal Connection
-  RegFile.io.rd_wdata := Mux(W2D.WriteBackSrc, W2D.MemoryReadData, W2D.ALUResult)
+
+  RegFile.io.rd_wdata := Mux(W2D.WriteBackSrc === WriteBackType.Mem, W2D.MemoryReadData,
+    Mux(W2D.WriteBackSrc === WriteBackType.ALU, W2D.ALUResult,
+      Mux(W2D.WriteBackSrc === WriteBackType.NextAddr, W2D.NextAddr, 666.U)))
+
   RegFile.io.rd_write := true.B
   RegFile.io.rs_read := true.B
 
-  // RegFile Output
-  D2E.Op1 := RegFile.io.rs1_rdata
-  D2E.Op2 := RegFile.io.rs2_rdata
+  // Decode2Execute Output
+  D2E.Op1 := 0.U
+  D2E.Op2 := 0.U
+  D2E.BranchOffset := 0.U
+  D2E.InstAddr := F2D.InstAddr
 
+  D2E.WriteBackSrc := WriteBackType.default
   D2E.ALUFunct := ALUFunct3.default
+  D2E.BRUFunct := BRUFunct3.default
   D2E.MemoryWriteData := RegFile.io.rs2_rdata
   D2E.MemoryWriteEnable_n := false.B
 
-  op1src := ALUOp1Src.rs1
-  op2src := ALUOp2Src.rs2
-  inst_type := InstType.R_Type
   immGen := 0.U
+
+  // Enum default
+  op1src := Op1SrcType.default
+  op2src := Op2SrcType.default
+  inst_type := InstType.default
+  exec_type := ExecuteType.default
 
   for(elem <- RV32I_ALU.table){
     when(inst === elem._1){
       inst_type := elem._2.head
+      exec_type := elem._2(1)
       D2E.ALUFunct := elem._2.last
     }
   }
+  for(elem <- RV32I_BRU.table){
+    when(inst === elem._1){
+      inst_type := elem._2.head
+      exec_type := elem._2(1)
+      D2E.BRUFunct := elem._2.last
+    }
+  }
+
+  D2E.ExecType := exec_type
+
   for(imm <- ImmTable){
     when(inst_type === imm._1){
       immGen := imm._2
     }
   }
 
-  switch(inst_type){
-    is(InstType.I_Type){
-      op1src := ALUOp1Src.rs1
-      op2src := ALUOp2Src.imm
-      when(inst === RV32I_ALU.JALR){
-        op1src := ALUOp1Src.zero
-        op2src := ALUOp2Src.NextInstAddr
+  switch(exec_type){
+    is(ExecuteType.ALUType){
+      D2E.WriteBackSrc := WriteBackType.ALU
+      when(inst_type === InstType.I_Type){
+        op1src := Op1SrcType.rs1
+        op2src := Op2SrcType.imm
+      }
+      when(inst_type === InstType.U_Type){
+        when(inst === RV32I_ALU.AUIPC) {
+          op1src := Op1SrcType.InstAddr
+          op2src := Op2SrcType.imm
+        }
+        when(inst === RV32I_ALU.LUI) {
+          op1src := Op1SrcType.zero
+          op2src := Op2SrcType.imm
+        }
+      }
+      when(inst_type === InstType.R_Type){
+        op1src := Op1SrcType.rs1
+        op2src := Op2SrcType.rs2
       }
     }
-    is(InstType.S_Type){}
-    is(InstType.B_Type){}
-    is(InstType.U_Type){
-      when(inst === RV32I_ALU.AUIPC) {
-        op1src := ALUOp1Src.InstAddr
-        op2src := ALUOp2Src.imm
+    is(ExecuteType.BRUType){
+      D2E.BranchOffset := immGen
+      when(inst_type === InstType.I_Type){
+        // JALR
+        D2E.WriteBackSrc := WriteBackType.NextAddr
+        op1src := Op1SrcType.rs1
+        op2src := Op2SrcType.imm
       }
-      when(inst === RV32I_ALU.LUI) {
-        op1src := ALUOp1Src.zero
-        op2src := ALUOp2Src.imm
+      when(inst_type === InstType.J_Type){
+        // JAL
+        D2E.WriteBackSrc := WriteBackType.NextAddr
+        op1src := Op1SrcType.zero
+        op2src := Op2SrcType.imm
+      }
+      when(inst_type === InstType.B_Type){
+        op1src := Op1SrcType.rs1
+        op2src := Op2SrcType.rs2
+        RegFile.io.rd_write := false.B
       }
     }
-    is(InstType.J_Type){
-      op1src := ALUOp1Src.zero
-      op2src := ALUOp2Src.NextInstAddr
-    }
-    is(InstType.R_Type){
-      op1src := ALUOp1Src.rs1
-      op2src := ALUOp2Src.rs2
+    is(ExecuteType.LSUType){
+
     }
   }
+
   switch(op1src){
-    is(ALUOp1Src.rs1)      {D2E.Op1 := RegFile.io.rs1_rdata}
-    is(ALUOp1Src.zero)     {D2E.Op1 := 0.U}
-    is(ALUOp1Src.InstAddr) {D2E.Op1 := F2D.InstAddr}
+    is(Op1SrcType.rs1)      {D2E.Op1 := RegFile.io.rs1_rdata}
+    is(Op1SrcType.zero)     {D2E.Op1 := 0.U}
+    is(Op1SrcType.InstAddr) {D2E.Op1 := F2D.InstAddr}
   }
   switch(op2src){
-    is(ALUOp2Src.rs2) {D2E.Op2 := RegFile.io.rs2_rdata}
-    is(ALUOp2Src.imm) {D2E.Op2 := immGen}
-    is(ALUOp2Src.NextInstAddr) {D2E.Op2 := F2D.InstAddr + 4.U}
+    is(Op2SrcType.rs2)      {D2E.Op2 := RegFile.io.rs2_rdata}
+    is(Op2SrcType.imm)      {D2E.Op2 := immGen}
   }
+
 }
