@@ -16,7 +16,7 @@ class Decode2ExecuteInterface (Config : JeriscvConfig) extends Bundle{
 }
 
 object ALUOp2Src extends ChiselEnum{
-  val rs2, imm = Value
+  val rs2, imm, NextInstAddr = Value
 }
 
 object ALUOp1Src extends ChiselEnum{
@@ -46,12 +46,13 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   val inst_type = Wire(InstType())
 
   // Immediate Generation
-  val I_imm = Cat(Fill(21,inst(31)), inst(30,20))
-  val S_imm = Cat(Fill(21,inst(31)), inst(30,25), inst(11,7))
-  val B_imm = Cat(Fill(20,inst(31)), inst(7), inst(30, 25), inst(11, 8), 0.U(1.W))
-  val U_imm = Cat(inst(31, 12), 0.U(12.W))
-  val J_imm = Cat(Fill(12,inst(31)), inst(19, 12), inst(20), inst(30, 21),0.U(1.W))
-
+  val ImmTable = Array(
+    InstType.I_Type -> Cat(Fill(21,inst(31)), inst(30,20)),
+    InstType.S_Type -> Cat(Fill(21,inst(31)), inst(30,25), inst(11,7)),
+    InstType.B_Type -> Cat(Fill(20,inst(31)), inst(7), inst(30, 25), inst(11, 8), 0.U(1.W)),
+    InstType.U_Type -> Cat(inst(31, 12), 0.U(12.W)),
+    InstType.J_Type -> Cat(Fill(12,inst(31)), inst(19, 12), inst(20), inst(30, 21),0.U(1.W))
+  )
   val immGen = Wire(UInt(32.W))
 
 
@@ -78,30 +79,42 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   inst_type := InstType.R_Type
   immGen := 0.U
 
-  for(elem <- RV32I.table_inst){
+  for(elem <- RV32I_ALU.table){
     when(inst === elem._1){
       inst_type := elem._2.head
       D2E.ALUFunct := elem._2.last
     }
   }
+  for(imm <- ImmTable){
+    when(inst_type === imm._1){
+      immGen := imm._2
+    }
+  }
 
   switch(inst_type){
     is(InstType.I_Type){
-      immGen := I_imm
       op1src := ALUOp1Src.rs1
       op2src := ALUOp2Src.imm
+      when(inst === RV32I_ALU.JALR){
+        op1src := ALUOp1Src.zero
+        op2src := ALUOp2Src.NextInstAddr
+      }
     }
-    is(InstType.S_Type){
-      immGen := S_imm
-    }
-    is(InstType.B_Type){
-      immGen := B_imm
-    }
+    is(InstType.S_Type){}
+    is(InstType.B_Type){}
     is(InstType.U_Type){
-      immGen := U_imm
+      when(inst === RV32I_ALU.AUIPC) {
+        op1src := ALUOp1Src.InstAddr
+        op2src := ALUOp2Src.imm
+      }
+      when(inst === RV32I_ALU.LUI) {
+        op1src := ALUOp1Src.zero
+        op2src := ALUOp2Src.imm
+      }
     }
     is(InstType.J_Type){
-      immGen := J_imm
+      op1src := ALUOp1Src.zero
+      op2src := ALUOp2Src.NextInstAddr
     }
     is(InstType.R_Type){
       op1src := ALUOp1Src.rs1
@@ -113,9 +126,9 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
     is(ALUOp1Src.zero)     {D2E.Op1 := 0.U}
     is(ALUOp1Src.InstAddr) {D2E.Op1 := F2D.InstAddr}
   }
-
   switch(op2src){
     is(ALUOp2Src.rs2) {D2E.Op2 := RegFile.io.rs2_rdata}
     is(ALUOp2Src.imm) {D2E.Op2 := immGen}
+    is(ALUOp2Src.NextInstAddr) {D2E.Op2 := F2D.InstAddr + 4.U}
   }
 }

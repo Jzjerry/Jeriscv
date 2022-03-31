@@ -27,6 +27,12 @@ object GenRegFile{
   }
 }
 
+object GenBRU{
+  def main(args: Array[String]): Unit = {
+    (new ChiselStage).emitVerilog(new BRU(32, 32, false))
+  }
+}
+
 object GenIDU{
   def main(args: Array[String]): Unit = {
     (new ChiselStage).emitVerilog(new InstructionDecodeUnit( new JeriscvConfig ))
