@@ -16,6 +16,7 @@ class Decode2ExecuteInterface (Config : JeriscvConfig) extends Bundle{
   val ExecType   = ExecuteType()
   val ALUFunct   = ALUFunct3()
   val BRUFunct   = BRUFunct3()
+  val LSUFunct   = LSUFunct3()
 
   val MemoryWriteData = UInt(Config.RegFileWidth.W)
   val MemoryWriteEnable_n = Bool()
@@ -94,8 +95,9 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   D2E.WriteBackSrc := WriteBackType.default
   D2E.ALUFunct := ALUFunct3.default
   D2E.BRUFunct := BRUFunct3.default
+  D2E.LSUFunct := LSUFunct3.default
   D2E.MemoryWriteData := RegFile.io.rs2_rdata
-  D2E.MemoryWriteEnable_n := false.B
+  D2E.MemoryWriteEnable_n := true.B
 
   immGen := 0.U
 
@@ -105,6 +107,8 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   inst_type := InstType.default
   exec_type := ExecuteType.default
 
+
+  // ALU Decode Generate
   for(elem <- RV32I_ALU.table){
     when(inst === elem._1){
       inst_type := elem._2.head
@@ -112,11 +116,20 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
       D2E.ALUFunct := elem._2.last
     }
   }
+  // BRU Decode Generate
   for(elem <- RV32I_BRU.table){
     when(inst === elem._1){
       inst_type := elem._2.head
       exec_type := elem._2(1)
       D2E.BRUFunct := elem._2.last
+    }
+  }
+  // LSU Decode Generate
+  for(elem <- RV32I_LSU.table){
+    when(inst === elem._1){
+      inst_type := elem._2.head
+      exec_type := elem._2(1)
+      D2E.LSUFunct := elem._2.last
     }
   }
 
@@ -171,7 +184,22 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
       }
     }
     is(ExecuteType.LSUType){
-
+      when(inst_type === InstType.I_Type) {
+        // Load
+        // Address Adding
+        D2E.WriteBackSrc := WriteBackType.Mem
+        op1src := Op1SrcType.rs1
+        op2src := Op2SrcType.imm
+        D2E.ALUFunct := ALUFunct3.add
+      }
+      when(inst_type === InstType.S_Type){
+        // Store
+        op1src := Op1SrcType.rs1
+        op2src := Op2SrcType.imm
+        D2E.ALUFunct := ALUFunct3.add
+        D2E.MemoryWriteEnable_n := false.B
+        RegFile.io.rd_write := false.B
+      }
     }
   }
 

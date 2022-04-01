@@ -33,6 +33,12 @@ object GenBRU{
   }
 }
 
+object GenLSU{
+  def main(args: Array[String]): Unit = {
+    (new ChiselStage).emitVerilog(new LSU(32))
+  }
+}
+
 object GenIDU{
   def main(args: Array[String]): Unit = {
     (new ChiselStage).emitVerilog(new InstructionDecodeUnit( new JeriscvConfig ))

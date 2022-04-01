@@ -10,6 +10,7 @@ class Execute2MemInterface (Config : JeriscvConfig) extends Bundle{
   val BranchFlag = Bool()
   val BranchAddr = UInt(Config.InstMemAddrWidth.W)
 
+  val LSUFunct = LSUFunct3()
   val MemoryWriteData = UInt(Config.RegFileWidth.W)
   val MemoryAddress = UInt(log2Ceil(Config.DataMemSize).W)
   val MemoryWriteEnable_n = Bool()
@@ -52,10 +53,11 @@ class ExecuteUnit(Config : JeriscvConfig) extends Module{
       bru.io.funct := D2E.BRUFunct
     }
     is(ExecuteType.LSUType){
-
+      alu.io.op1 := D2E.Op1
+      alu.io.op2 := D2E.Op2
+      alu.io.funct3 := D2E.ALUFunct
     }
   }
-
 
   // ALU Output
   E2M.ALUResult := alu.io.result
@@ -66,8 +68,10 @@ class ExecuteUnit(Config : JeriscvConfig) extends Module{
   E2M.BranchFlag := bru.io.BranchFlag
 
   // Unit Output
+  E2M.LSUFunct := D2E.LSUFunct
   E2M.MemoryWriteData := D2E.MemoryWriteData
   E2M.MemoryWriteEnable_n := D2E.MemoryWriteEnable_n
+
   E2M.InstAddr := D2E.InstAddr
   E2M.WriteBackSrc := D2E.WriteBackSrc
 }
