@@ -12,10 +12,23 @@ class DataMemInterface(MemSize : Int) extends Bundle{
   val ReadData = Output(UInt(32.W))
 }
 
-class DataMem (MemSize : Int)extends Module{
+class DataMemBlackBox (MemSize : Int) extends BlackBox{
+  val io = IO(new Bundle{
+    val wrclock = Input(Clock())
+    val rdclock = Input(Clock())
+    val rdaddress = Input(UInt(log2Ceil(MemSize).W))
+    val wraddress = Input(UInt(log2Ceil(MemSize).W))
+    val wren = Input(Bool())
+    val byteena_a = Input(UInt(4.W))
+    val data = Input(UInt(32.W))
+    val q = Output(UInt(32.W))
+  })
+}
+
+class DataMem (MemSize : Int, MemSync : Boolean)extends Module{
   val width : Int = 8     /* the length of memory blocks should be 8 bits */
   val io = IO(new DataMemInterface(MemSize))
-  val mem = Mem(MemSize , UInt(width.W))
+  val mem = if(MemSync) {SyncReadMem(MemSize , UInt(width.W))} else { Mem(MemSize , UInt(width.W))}
 
   io.ReadData := 0.U
   /* Read = True, Write = False*/

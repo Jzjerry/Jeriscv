@@ -2,11 +2,21 @@ package Jeriscv
 
 import chisel3._
 import chisel3.util._
-import chisel3.util.experimental.loadMemoryFromFileInline
+import chisel3.util.experimental._
 
 class InstructionMemInterface(InstNum : Int) extends Bundle{
   val InstAddr = Input(UInt(log2Ceil(InstNum * 4).W))
   val InstData = Output(UInt(32.W))
+}
+
+class InstructionMemBlackBox(addressWidth : Int) extends BlackBox{
+  val io = IO(new Bundle{
+    val clock = Input(Clock())
+    val address = Input(UInt(addressWidth.W))
+    val wren = Input(Bool())
+    val data = Input(UInt(32.W))
+    val q = Output(UInt(32.W))
+  })
 }
 
 class InstructionMem (memoryFile : String = "", InstNum : Int)extends Module {

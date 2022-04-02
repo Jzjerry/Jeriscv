@@ -8,9 +8,15 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class coreTest extends AnyFlatSpec with ChiselScalatestTester {
 
+  val Config = new JeriscvConfig
+  Config.DataMemBlackBox = false
+  Config.InstMemBlackBox = false
+  Config.VirtualInstMem = true
+  Config.SyncDataMem = false
+
   behavior of "Core"
   it should "Caculate Basic R-Type & I-Type Instruction" in{
-    test(new core(new JeriscvConfig)) { dut =>
+    test(new core(Config)) { dut =>
 
       // I test
       dut.virtualFetch.InstData.poke("b000000000001_00000_000_00001_0010011".asUInt)
@@ -65,7 +71,7 @@ class coreTest extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
   it should "Perform Basic U-Type Instruction" in{
-    test(new core(new JeriscvConfig)){ dut=>
+    test(new core(Config)){ dut=>
       dut.virtualFetch.InstData.poke("b00000000111111111111_00001_0110111".asUInt)
       println("LUI 0X00FFF, x1")
       println("ALU Result(Before step): " + dut.io_o.m2w.ALUResult.peek())
@@ -93,7 +99,7 @@ class coreTest extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
   it should "Perform Basic J-Type Instruction" in{
-    test(new core(new JeriscvConfig)) { dut =>
+    test(new core(Config)) { dut =>
 
       dut.virtualFetch.InstData.poke("b000000000100_00001_000_00001_0010011".asUInt)
       println("ADDI 0x4, x1, x1")
@@ -129,7 +135,7 @@ class coreTest extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
   it should "Perform Basic B-Type Instruction" in{
-    test(new core(new JeriscvConfig)) {dut=>
+    test(new core(Config)) {dut=>
 
       dut.virtualFetch.InstAddr.poke(4.U)
       dut.virtualFetch.InstData.poke("b0000000_00001_00001_000_00000_1100011".asUInt)
@@ -172,7 +178,7 @@ class coreTest extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
   it should "Perform Store & Load Instruction" in {
-    test(new core(new JeriscvConfig)) { dut =>
+    test(new core(Config)) { dut =>
       dut.virtualFetch.InstData.poke("b111111111111_00000_000_00001_0010011".asUInt)
       println("ADDI 0xffffffff, x0, x1")
       println("ALU Result(Before step): " + dut.io_o.m2w.ALUResult.peek())
@@ -250,7 +256,7 @@ class coreTest extends AnyFlatSpec with ChiselScalatestTester {
     }
   }
   it should "Generate Correct Immediate Num" in {
-    test(new core(new JeriscvConfig)) { dut =>
+    test(new core(Config)) { dut =>
       println("Imm Type Test")
       for(imm <- dut.IDU.ImmTable)
         println(imm._1 + "->" + imm._2)

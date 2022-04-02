@@ -11,7 +11,7 @@ object GenInstMem{
 
 object GenDataMem{
   def main(args: Array[String]): Unit = {
-    (new ChiselStage).emitVerilog(new DataMem(256))
+    (new ChiselStage).emitVerilog(new DataMem(256, true))
   }
 }
 
@@ -53,6 +53,7 @@ object GenIFU{
 
 object Gencore{
   def main(args: Array[String]): Unit = {
-    (new ChiselStage).emitVerilog(new core( new JeriscvConfig ))
+    val Config = new JeriscvConfig
+    (new ChiselStage).emitVerilog(new core(Config))
   }
 }
