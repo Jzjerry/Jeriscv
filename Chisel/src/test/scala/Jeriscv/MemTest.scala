@@ -9,7 +9,7 @@ import chisel3.util._
 class MemTest extends AnyFlatSpec with ChiselScalatestTester {
   behavior of "DataMem"
   it should "Complete Read And Write" in {
-    test(new DataMem(256)) { dut =>
+    test(new DataMem(256, true)) { dut =>
       dut.io.ReadWrite.poke(false.B)
       for (i <- 0 until 64) {
         dut.io.Addr.poke((i*4).U)

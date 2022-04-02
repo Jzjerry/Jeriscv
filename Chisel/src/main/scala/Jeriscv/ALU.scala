@@ -1,14 +1,14 @@
 package Jeriscv
 
 import chisel3._
-import chisel3.util._
 import chisel3.experimental.ChiselEnum
+import chisel3.util._
 
 object ALUFunct3 extends ChiselEnum{
   val add, sub, xor, or, and, srl, sra, sll, slt, sltu, default = Value
 }
 
-class ALUInterface (width : Int, OneHot : Boolean)extends Bundle{
+class ALUInterface (width : Int)extends Bundle{
   val op1 = Input(UInt(width.W))
   val op2 = Input(UInt(width.W))
   val funct3 = Input(ALUFunct3())
@@ -19,7 +19,7 @@ class ALUInterface (width : Int, OneHot : Boolean)extends Bundle{
 // Optimized -- One Hot Code funct3
 // Reference: RVCoreP
 class ALU (width : Int, OneHot : Boolean)extends Module {
-  val io = IO(new ALUInterface(width, OneHot))
+  val io = IO(new ALUInterface(width))
 
   if(OneHot){
     val resultVec = Wire(Vec(10, UInt(width.W)))

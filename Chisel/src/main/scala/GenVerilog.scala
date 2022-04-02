@@ -11,7 +11,7 @@ object GenInstMem{
 
 object GenDataMem{
   def main(args: Array[String]): Unit = {
-    (new ChiselStage).emitVerilog(new DataMem(256))
+    (new ChiselStage).emitVerilog(new DataMem(256, true))
   }
 }
 
@@ -24,6 +24,18 @@ object GenALU{
 object GenRegFile{
   def main(args: Array[String]): Unit = {
     (new ChiselStage).emitVerilog(new RegFile(32))
+  }
+}
+
+object GenBRU{
+  def main(args: Array[String]): Unit = {
+    (new ChiselStage).emitVerilog(new BRU(32, 32, false))
+  }
+}
+
+object GenLSU{
+  def main(args: Array[String]): Unit = {
+    (new ChiselStage).emitVerilog(new LSU(32))
   }
 }
 
@@ -41,6 +53,7 @@ object GenIFU{
 
 object Gencore{
   def main(args: Array[String]): Unit = {
-    (new ChiselStage).emitVerilog(new core( new JeriscvConfig ))
+    val Config = new JeriscvConfig
+    (new ChiselStage).emitVerilog(new core(Config))
   }
 }

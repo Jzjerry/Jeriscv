@@ -4,12 +4,20 @@ import chisel3.util._
 
 class JeriscvConfig{
 
-  val DebugInstMem      : Boolean = true
+  var DebugOutput       : Boolean = true
+  var VirtualInstMem    : Boolean = false
+  var InstMemBlackBox   : Boolean = true
 
-  val RegFileWidth      : Int = 32
-  val DataMemSize       : Int = 256
-  val InstNum           : Int = 256
-  val InstMemSrc        : String = ""
-  val InstMemAddrWidth  : Int = log2Ceil(InstNum * 4)
-  val ALUOptimize       : Boolean = true
+  var RegFileWidth      : Int = 32
+
+  var DataMemSize       : Int = 256
+  var DataMemBlackBox   : Boolean = true
+  var SyncDataMem       : Boolean = false
+
+  var InstNum           : Int = 256
+  var InstMemSrc        : String = ""
+  var InstMemAddrWidth  : Int = log2Ceil(InstNum * 4)
+
+  var ALUOneHotOptimize       : Boolean = true
+  var BRUOneHotOptimize       : Boolean = true
 }
