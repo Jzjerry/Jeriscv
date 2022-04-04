@@ -19,15 +19,21 @@ class core(Config : JeriscvConfig) extends Module{
   val EX = Module(new ExecuteUnit(Config))
   val MEM = Module(new MemoryUnit(Config))
 
+  val vmem = IO(new Bundle{
+    val InstData = Input(UInt(32.W))
+    val InstAddr = Output(UInt(Config.InstMemAddrWidth.W))
+  })
+
+  if(Config.VirtualInstMem){
+    IFU.vmem.InstData := vmem.InstData
+    vmem.InstAddr := IFU.vmem.InstAddr
+  }
+
   IFU.In2F.PCEnable := true.B
   IFU.In2F.BranchAddr := MEM.M2F.BranchAddr
   IFU.In2F.BranchFlag := MEM.M2F.BranchFlag
-  val virtualFetch = IO(Input(new Fetch2DecodeInterface(Config)))
-  if(Config.VirtualInstMem){
-    IDU.F2D := virtualFetch
-  }else{
-    IDU.F2D := IFU.F2D
-  }
+  IDU.F2D := IFU.F2D
+
   IDU.W2D := MEM.M2W
   EX.D2E := IDU.D2E
   MEM.E2M := EX.E2M

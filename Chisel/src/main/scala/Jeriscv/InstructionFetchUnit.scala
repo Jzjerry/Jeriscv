@@ -19,6 +19,10 @@ class InstructionFetchUnit(Config : JeriscvConfig) extends Module {
 
   val In2F = IO(Input(new EndToFetchInterface(Config)))
   val F2D = IO(Output(new Fetch2DecodeInterface(Config)))
+  val vmem = IO(new Bundle{
+    val InstData = Input(UInt(32.W))
+    val InstAddr = Output(UInt(Config.InstMemAddrWidth.W))
+  })
 
   val ProgramCounter = RegInit(UInt(Config.InstMemAddrWidth.W), 0.U)
 
@@ -29,8 +33,11 @@ class InstructionFetchUnit(Config : JeriscvConfig) extends Module {
       ProgramCounter := ProgramCounter + 4.U
     }
   }
-
-  if(Config.InstMemBlackBox) {
+  if(Config.VirtualInstMem){
+    vmem.InstAddr := ProgramCounter
+    F2D.InstData := vmem.InstData
+  }
+  else if(Config.InstMemBlackBox) {
     val InstMemBB = Module(new InstructionMemBlackBox(Config.InstMemAddrWidth))
     InstMemBB.io.address := ProgramCounter(Config.InstMemAddrWidth - 1, 2)
     InstMemBB.io.clock := clock
