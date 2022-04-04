@@ -81,10 +81,13 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
 
   RegFile.io.rd_wdata := Mux(W2D.WriteBackSrc === WriteBackType.Mem, W2D.MemoryReadData,
     Mux(W2D.WriteBackSrc === WriteBackType.ALU, W2D.ALUResult,
-      Mux(W2D.WriteBackSrc === WriteBackType.NextAddr, W2D.NextAddr, 666.U)))
+      Mux(W2D.WriteBackSrc === WriteBackType.NextAddr, W2D.NextAddr, 0.U)))
 
   RegFile.io.rd_write := true.B
   RegFile.io.rs_read := true.B
+  when(W2D.WriteBackSrc === WriteBackType.default){
+    RegFile.io.rd_write := false.B
+  }
 
   // Decode2Execute Output
   D2E.Op1 := 0.U
