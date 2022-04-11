@@ -16,8 +16,10 @@ class JeriscvConfig{
 
   var InstNum           : Int = 256
   var InstMemSrc        : String = ""
-  var InstMemAddrWidth  : Int = log2Ceil(InstNum * 4)
+  var InstMemAddrWidth  : Int = 32
 
   var ALUOneHotOptimize       : Boolean = true
   var BRUOneHotOptimize       : Boolean = true
+
+  var SimplePipeline          : Boolean = false
 }

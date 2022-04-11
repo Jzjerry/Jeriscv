@@ -11,8 +11,7 @@ class core(Config : JeriscvConfig) extends Module{
   val io_o = IO(Output(new Bundle{
     val m2w = new Memory2WritebackInterface(Config)
     val m2f = new Memory2FetchInterface(Config)
-  }
-  ))
+  }))
 
   val IFU = Module(new InstructionFetchUnit(Config))
   val IDU = Module(new InstructionDecodeUnit(Config))
@@ -24,22 +23,39 @@ class core(Config : JeriscvConfig) extends Module{
     val InstAddr = Output(UInt(Config.InstMemAddrWidth.W))
   })
 
-  if(Config.VirtualInstMem){
+  if(Config.VirtualInstMem) {
     IFU.vmem.InstData := vmem.InstData
     vmem.InstAddr := IFU.vmem.InstAddr
+  } else{
+    IFU.vmem.InstData := DontCare
+    vmem.InstAddr := DontCare
   }
 
-  IFU.In2F.PCEnable := true.B
-  IFU.In2F.BranchAddr := MEM.M2F.BranchAddr
-  IFU.In2F.BranchFlag := MEM.M2F.BranchFlag
-  IDU.F2D := IFU.F2D
+  if(Config.SimplePipeline) {
+    IFU.In2F.PCEnable := true.B
+    IFU.In2F.BranchAddr := MEM.M2F.BranchAddr
+    IFU.In2F.BranchFlag := MEM.M2F.BranchFlag
 
-  IDU.W2D := MEM.M2W
-  EX.D2E := IDU.D2E
-  MEM.E2M := EX.E2M
+    IDU.F2D := IFU.F2D
 
+    IDU.W2D := MEM.M2W
+    EX.D2E := IDU.D2E
+    MEM.E2M := EX.E2M
+  }
+  else{
+    IFU.In2F.PCEnable := true.B
+    IFU.In2F.BranchAddr := (MEM.M2F.BranchAddr)
+    IFU.In2F.BranchFlag := (MEM.M2F.BranchFlag)
+
+    IDU.F2D := (IFU.F2D)
+
+    IDU.W2D := (MEM.M2W)
+    EX.D2E := (IDU.D2E)
+    MEM.E2M := (EX.E2M)
+  }
   io_o.m2w := MEM.M2W
   io_o.m2f := MEM.M2F
+
   if(Config.DebugOutput){
     val InstData = IO(Output(UInt(32.W)))
     val InstAddr = IO(Output(UInt(Config.InstMemAddrWidth.W)))

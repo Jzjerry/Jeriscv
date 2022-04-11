@@ -54,7 +54,7 @@ object GenIFU{
 object GenCoreSynthesis{
   def main(args: Array[String]): Unit = {
     val Config = new JeriscvConfig
-    Config.DebugOutput = false
+    Config.DebugOutput = true
     Config.VirtualInstMem = false
     Config.InstMemBlackBox = true
     Config.DataMemBlackBox = true
@@ -62,7 +62,7 @@ object GenCoreSynthesis{
     (new ChiselStage).emitVerilog(new core(Config))
   }
 }
-object GenDebugCore{
+object GenCoreDebug{
   def main(args: Array[String]): Unit = {
     val Config = new JeriscvConfig
     Config.DebugOutput = true
@@ -71,5 +71,17 @@ object GenDebugCore{
     Config.DataMemBlackBox = false
     Config.SyncDataMem = false
     (new ChiselStage).emitVerilog(new core(Config))
+  }
+}
+
+object Test{
+  def main(args: Array[String]): Unit = {
+    val Config = new JeriscvConfig
+    Config.DebugOutput = true
+    Config.VirtualInstMem = true
+    Config.InstMemBlackBox = false
+    Config.DataMemBlackBox = false
+    Config.SyncDataMem = false
+//    print(new Memory2WritebackInterface(Config))
   }
 }

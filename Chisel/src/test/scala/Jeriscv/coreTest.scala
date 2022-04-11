@@ -36,7 +36,7 @@ class coreTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io_o.m2w.ALUResult.expect(2.U)
 
       dut.vmem.InstData.poke("b111111111100_00010_000_00010_0010011".asUInt)
-      println("ADDI -3, x1, x2")
+      println("ADDI -4, x1, x2")
       println("ALU Result(Before step): " + dut.io_o.m2w.ALUResult.peek())
 //      dut.io_o.m2w.ALUResult.expect(-1)
       dut.clock.step()
@@ -180,7 +180,7 @@ class coreTest extends AnyFlatSpec with ChiselScalatestTester {
   it should "Perform Store & Load Instruction" in {
     test(new core(Config)) { dut =>
       dut.vmem.InstData.poke("b111111111111_00000_000_00001_0010011".asUInt)
-      println("ADDI 0xffffffff, x0, x1")
+      println("ADDI 0xfff, x0, x1")
       println("ALU Result(Before step): " + dut.io_o.m2w.ALUResult.peek())
       //      dut.io_o.m2w.ALUResult.expect(4.U)
       dut.clock.step()

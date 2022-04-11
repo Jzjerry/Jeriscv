@@ -16,6 +16,9 @@ class Execute2MemInterface (Config : JeriscvConfig) extends Bundle{
   val MemoryWriteEnable_n = Bool()
 
   val InstAddr = UInt(Config.InstMemAddrWidth.W)
+
+  val WriteBackDest = UInt(5.W)
+  val WriteBackEn = Bool()
   val WriteBackSrc = WriteBackType()
 }
 
@@ -74,4 +77,6 @@ class ExecuteUnit(Config : JeriscvConfig) extends Module{
 
   E2M.InstAddr := D2E.InstAddr
   E2M.WriteBackSrc := D2E.WriteBackSrc
+  E2M.WriteBackDest := D2E.WriteBackDest
+  E2M.WriteBackEn := D2E.WriteBackEn
 }

@@ -33,22 +33,26 @@ class InstructionFetchUnit(Config : JeriscvConfig) extends Module {
       ProgramCounter := ProgramCounter + 4.U
     }
   }
+
   if(Config.VirtualInstMem){
     vmem.InstAddr := ProgramCounter
     F2D.InstData := vmem.InstData
   }
-  else if(Config.InstMemBlackBox) {
-    val InstMemBB = Module(new InstructionMemBlackBox(Config.InstMemAddrWidth))
-    InstMemBB.io.address := ProgramCounter(Config.InstMemAddrWidth - 1, 2)
-    InstMemBB.io.clock := clock
-    InstMemBB.io.wren := false.B
-    InstMemBB.io.data := 0.U
-    F2D.InstData := InstMemBB.io.q
-    }
   else{
-    val InstMem = Module(new InstructionMem(Config.InstMemSrc, Config.InstNum))
-    InstMem.io.InstAddr := ProgramCounter
-    F2D.InstData := InstMem.io.InstData
+    vmem.InstAddr := DontCare
+    if(Config.InstMemBlackBox) {
+      val InstMemBB = Module(new InstructionMemBlackBox(Config.InstMemAddrWidth))
+      InstMemBB.io.address := ProgramCounter(Config.InstMemAddrWidth - 1, 2)
+      InstMemBB.io.clock := (~clock.asUInt).asBool.asClock
+      InstMemBB.io.wren := false.B
+      InstMemBB.io.data := 0.U
+      F2D.InstData := InstMemBB.io.q
+    }
+    else{
+      val InstMem = Module(new InstructionMem(Config.InstMemSrc, Config.InstNum))
+      InstMem.io.InstAddr := ProgramCounter
+      F2D.InstData := InstMem.io.InstData
+    }
   }
   F2D.InstAddr := ProgramCounter
 }
