@@ -10,7 +10,7 @@ class Memory2WritebackInterface(Config : JeriscvConfig) extends Bundle{
 
   val MemoryReadData = UInt(Config.RegFileWidth.W)
 
-  val WriteBackSrc = WriteBackType()
+  val WriteBackData = UInt(Config.RegFileWidth.W)
   val WriteBackEn = Bool()
   val WriteBackDest = UInt(5.W)
 }
@@ -74,7 +74,13 @@ class MemoryUnit(Config : JeriscvConfig) extends Module {
   M2F.BranchFlag := E2M.BranchFlag
 
   M2W.NextAddr := E2M.InstAddr + 4.U
-  M2W.WriteBackSrc := E2M.WriteBackSrc
+
+  M2W.WriteBackData :=
+    Mux(E2M.WriteBackSrc === WriteBackType.Mem, M2W.MemoryReadData,
+      Mux(E2M.WriteBackSrc === WriteBackType.ALU, M2W.ALUResult,
+        Mux(E2M.WriteBackSrc === WriteBackType.NextAddr, M2W.NextAddr, 0.U)))
+
   M2W.WriteBackEn := E2M.WriteBackEn
   M2W.WriteBackDest := E2M.WriteBackDest
+
 }

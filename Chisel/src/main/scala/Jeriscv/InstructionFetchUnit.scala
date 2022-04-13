@@ -27,16 +27,15 @@ class InstructionFetchUnit(Config : JeriscvConfig) extends Module {
   val ProgramCounter = RegInit(UInt(Config.InstMemAddrWidth.W), 0.U)
 
   when(In2F.PCEnable){
-    when(In2F.BranchFlag){
-      ProgramCounter := In2F.BranchAddr
-    }.otherwise{
       ProgramCounter := ProgramCounter + 4.U
-    }
+  }
+  when(In2F.BranchFlag){
+    ProgramCounter := In2F.BranchAddr
   }
 
   if(Config.VirtualInstMem){
     vmem.InstAddr := ProgramCounter
-    F2D.InstData := vmem.InstData
+    F2D.InstData := Mux(In2F.PCEnable, vmem.InstData, RV32I_ALU.NOP)
   }
   else{
     vmem.InstAddr := DontCare
@@ -46,12 +45,12 @@ class InstructionFetchUnit(Config : JeriscvConfig) extends Module {
       InstMemBB.io.clock := (~clock.asUInt).asBool.asClock
       InstMemBB.io.wren := false.B
       InstMemBB.io.data := 0.U
-      F2D.InstData := InstMemBB.io.q
+      F2D.InstData := Mux(In2F.PCEnable, InstMemBB.io.q, RV32I_ALU.NOP) // Bubble
     }
     else{
       val InstMem = Module(new InstructionMem(Config.InstMemSrc, Config.InstNum))
       InstMem.io.InstAddr := ProgramCounter
-      F2D.InstData := InstMem.io.InstData
+      F2D.InstData := Mux(In2F.PCEnable, InstMem.io.InstData, RV32I_ALU.NOP) // Bubble
     }
   }
   F2D.InstAddr := ProgramCounter

@@ -24,6 +24,14 @@ class Decode2ExecuteInterface (Config : JeriscvConfig) extends Bundle{
   val WriteBackDest = UInt(5.W)
   val WriteBackEn = Bool()
   val WriteBackSrc = WriteBackType()
+
+  val rs1 = UInt(5.W)
+  val rs2 = UInt(5.W)
+
+  val op1src = Op1SrcType()
+  val op2src = Op2SrcType()
+
+  val JFlag = Bool()
 }
 
 object WriteBackType extends ChiselEnum{
@@ -80,18 +88,13 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   RegFile.io.rs1_addr := rs1
   RegFile.io.rs2_addr := rs2
 
-  RegFile.io.rd_wdata := Mux(W2D.WriteBackSrc === WriteBackType.Mem, W2D.MemoryReadData,
-    Mux(W2D.WriteBackSrc === WriteBackType.ALU, W2D.ALUResult,
-      Mux(W2D.WriteBackSrc === WriteBackType.NextAddr, W2D.NextAddr, 0.U)))
+  RegFile.io.rd_wdata := W2D.WriteBackData
   RegFile.io.rd_addr := W2D.WriteBackDest
   RegFile.io.rd_write := W2D.WriteBackEn
 
   RegFile.io.rs_read := true.B
 
   D2E.WriteBackEn := true.B
-  when(W2D.WriteBackSrc === WriteBackType.default){
-    D2E.WriteBackEn := true.B
-  }
 
   // Decode2Execute Output
   D2E.Op1 := 0.U
@@ -106,6 +109,13 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   D2E.LSUFunct := LSUFunct3.default
   D2E.MemoryWriteData := RegFile.io.rs2_rdata
   D2E.MemoryWriteEnable_n := true.B
+
+  // Bypassing Forward
+  D2E.rs1 := rs1
+  D2E.rs2 := rs2
+  D2E.op1src := op1src
+  D2E.op2src := op2src
+  D2E.JFlag := D2E.ExecType === ExecuteType.BRUType
 
   immGen := 0.U
 
@@ -188,7 +198,7 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
       when(inst_type === InstType.B_Type){
         op1src := Op1SrcType.rs1
         op2src := Op2SrcType.rs2
-        RegFile.io.rd_write := false.B
+        D2E.WriteBackEn := false.B
       }
     }
     is(ExecuteType.LSUType){
@@ -206,7 +216,7 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
         op2src := Op2SrcType.imm
         D2E.ALUFunct := ALUFunct3.add
         D2E.MemoryWriteEnable_n := false.B
-        RegFile.io.rd_write := false.B
+        D2E.WriteBackEn := false.B
       }
     }
   }

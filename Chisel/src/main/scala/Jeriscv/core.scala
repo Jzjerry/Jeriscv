@@ -4,6 +4,7 @@ package Jeriscv
 
 import chisel3._
 import chisel3.util._
+import Jeriscv.Pipeline._
 
 class core(Config : JeriscvConfig) extends Module{
 
@@ -23,6 +24,8 @@ class core(Config : JeriscvConfig) extends Module{
     val InstAddr = Output(UInt(Config.InstMemAddrWidth.W))
   })
 
+  val BypassIO = IO(Output(new Bypass2ExecuteInterface(Config)))
+
   if(Config.VirtualInstMem) {
     IFU.vmem.InstData := vmem.InstData
     vmem.InstAddr := IFU.vmem.InstAddr
@@ -32,15 +35,31 @@ class core(Config : JeriscvConfig) extends Module{
   }
 
   if(Config.SimplePipeline) {
-    IFU.In2F.PCEnable := true.B
+
+    val Bypass = Module(new BypassingUnit(Config))
+    val Hazard = Module(new HazardDetectionUnit(Config))
+
     IFU.In2F.BranchAddr := MEM.M2F.BranchAddr
     IFU.In2F.BranchFlag := MEM.M2F.BranchFlag
 
-    IDU.F2D := IFU.F2D
+    IDU.F2D := RegNext(IFU.F2D)
 
-    IDU.W2D := MEM.M2W
-    EX.D2E := IDU.D2E
-    MEM.E2M := EX.E2M
+    EX.D2E := RegNext(IDU.D2E)
+    MEM.E2M := RegNext(EX.E2M)
+    IDU.W2D := (MEM.M2W)
+
+    Bypass.E2B := EX.E2B
+    EX.B2E := Bypass.B2E
+
+    Bypass.E2M := (MEM.E2M)
+    Bypass.M2W := (IDU.W2D)
+
+    Hazard.F2D := IDU.F2D
+    Hazard.D2E := EX.D2E
+    Hazard.JFlag := IDU.D2E.JFlag | EX.E2M.JFlag | MEM.E2M.JFlag
+    IFU.In2F.PCEnable := ~Hazard.HazardFlag
+
+    BypassIO := Bypass.B2E
   }
   else{
     IFU.In2F.PCEnable := true.B
@@ -52,14 +71,20 @@ class core(Config : JeriscvConfig) extends Module{
     IDU.W2D := (MEM.M2W)
     EX.D2E := (IDU.D2E)
     MEM.E2M := (EX.E2M)
+
+    BypassIO := DontCare
   }
   io_o.m2w := MEM.M2W
   io_o.m2f := MEM.M2F
 
+  val InstData = IO(Output(UInt(32.W)))
+  val InstAddr = IO(Output(UInt(Config.InstMemAddrWidth.W)))
+
   if(Config.DebugOutput){
-    val InstData = IO(Output(UInt(32.W)))
-    val InstAddr = IO(Output(UInt(Config.InstMemAddrWidth.W)))
     InstData := IFU.F2D.InstData
     InstAddr := IFU.F2D.InstAddr
+  }else{
+    InstData := DontCare
+    InstAddr := DontCare
   }
 }

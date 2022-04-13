@@ -108,7 +108,7 @@ class coreTest extends AnyFlatSpec with ChiselScalatestTester {
       println("ALU Result( After step): " + dut.io_o.m2w.ALUResult.peek())
 
 //      dut.virtualFetch.InstAddr.poke(4.U)
-      dut.vmem.InstData.poke("b11111111110111111111_00001_1101111".asUInt) // "b11111111111111111111_00001_1101111"
+      dut.vmem.InstData.poke("b11111111110111111111_00001_1101111".asUInt)
       println("JAL -4, x1")
       println("BRU Result(Before step): " + dut.io_o.m2f.BranchAddr.peek() + dut.io_o.m2f.BranchFlag.peek())
       dut.clock.step()

@@ -59,6 +59,7 @@ object GenCoreSynthesis{
     Config.InstMemBlackBox = true
     Config.DataMemBlackBox = true
     Config.SyncDataMem = false
+    Config.SimplePipeline = true
     (new ChiselStage).emitVerilog(new core(Config))
   }
 }
@@ -70,6 +71,7 @@ object GenCoreDebug{
     Config.InstMemBlackBox = false
     Config.DataMemBlackBox = false
     Config.SyncDataMem = false
+    Config.SimplePipeline = true
     (new ChiselStage).emitVerilog(new core(Config))
   }
 }
