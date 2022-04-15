@@ -132,7 +132,15 @@ class PipelineTest extends AnyFlatSpec with ChiselScalatestTester {
   it should "Stall Pipeline when branches" in{
     test(new core(Config)){dut=>
 
+      val vmem = Map(
+        0.U(32.W) -> "b000000000001_00001_000_00001_0010011".U(32.W),
+        0x4.U(32.W) -> "b000000000001_00001_000_00001_0010011".U(32.W)
+      )
 
+      print(dut.vmem.InstAddr.peek())
+      print(vmem(0.U(32.W)))
+      dut.vmem.InstData.poke(vmem(dut.vmem.InstAddr.peek()))
+      dut.clock.step()
 
     }
   }

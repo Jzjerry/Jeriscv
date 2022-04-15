@@ -72,7 +72,8 @@ object GenCoreDebug{
     Config.DataMemBlackBox = false
     Config.SyncDataMem = false
     Config.SimplePipeline = true
-    (new ChiselStage).emitVerilog(new core(Config))
+    val Stage = (new ChiselStage)
+    Stage.emitVerilog(new core(Config),Array("-o","core_debug.v"))
   }
 }
 

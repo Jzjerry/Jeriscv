@@ -10,7 +10,7 @@ class JeriscvConfig{
 
   var RegFileWidth      : Int = 32
 
-  var DataMemSize       : Int = 256
+  var DataMemSize       : Int = 4096
   var DataMemBlackBox   : Boolean = true
   var SyncDataMem       : Boolean = false
 

@@ -19,7 +19,8 @@ class Decode2ExecuteInterface (Config : JeriscvConfig) extends Bundle{
   val LSUFunct   = LSUFunct3()
 
   val MemoryWriteData = UInt(Config.RegFileWidth.W)
-  val MemoryWriteEnable_n = Bool()
+  val MemoryReadEnable = Bool()
+  val MemoryWriteEnable = Bool()
 
   val WriteBackDest = UInt(5.W)
   val WriteBackEn = Bool()
@@ -49,7 +50,7 @@ object Op1SrcType extends ChiselEnum{
 class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
 
   val F2D = IO(Input(new Fetch2DecodeInterface(Config)))
-  val W2D = IO(Input(new Memory2WritebackInterface(Config)))
+  val W2D = IO(Input(new WriteBack2DecodeInterface(Config)))
   val D2E = IO(Output(new Decode2ExecuteInterface(Config)))
 
   val RegFile = Module(new RegFile(Config.RegFileWidth))
@@ -108,7 +109,9 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   D2E.BRUFunct := BRUFunct3.default
   D2E.LSUFunct := LSUFunct3.default
   D2E.MemoryWriteData := RegFile.io.rs2_rdata
-  D2E.MemoryWriteEnable_n := true.B
+
+  D2E.MemoryWriteEnable := false.B
+  D2E.MemoryReadEnable := false.B
 
   // Bypassing Forward
   D2E.rs1 := rs1
@@ -205,17 +208,20 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
       when(inst_type === InstType.I_Type) {
         // Load
         // Address Adding
-        D2E.WriteBackSrc := WriteBackType.Mem
         op1src := Op1SrcType.rs1
         op2src := Op2SrcType.imm
         D2E.ALUFunct := ALUFunct3.add
+        D2E.MemoryReadEnable := true.B
+        D2E.MemoryWriteEnable := false.B
+        D2E.WriteBackSrc := WriteBackType.Mem
       }
       when(inst_type === InstType.S_Type){
         // Store
         op1src := Op1SrcType.rs1
         op2src := Op2SrcType.imm
         D2E.ALUFunct := ALUFunct3.add
-        D2E.MemoryWriteEnable_n := false.B
+        D2E.MemoryWriteEnable := true.B
+        D2E.MemoryReadEnable := false.B
         D2E.WriteBackEn := false.B
       }
     }
