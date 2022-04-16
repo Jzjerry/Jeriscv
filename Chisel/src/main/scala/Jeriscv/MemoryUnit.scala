@@ -39,6 +39,8 @@ class MemoryUnit(Config : JeriscvConfig) extends Module {
       DMem.io.byteena_a := 0x1.U << E2M.MemoryAddress(1,0)
     }
     DMem.io.wren := E2M.MemoryWriteEnable
+    DMem.io.rden := E2M.MemoryReadEnable
+    DMem.io.rd_aclr := reset
     DMem.io.data := E2M.MemoryWriteData
     DMem.io.rdaddress := E2M.MemoryAddress(log2Ceil(Config.DataMemSize) - 1, 2)
     DMem.io.wraddress := E2M.MemoryAddress(log2Ceil(Config.DataMemSize) - 1, 2)

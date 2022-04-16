@@ -27,6 +27,7 @@ class core(Config : JeriscvConfig) extends Module{
   })
 
   val BypassIO = IO(Output(new Bypass2ExecuteInterface(Config)))
+  val HazardFlag = IO(Output(Bool()))
 
   if(Config.VirtualInstMem) {
     IFU.vmem.InstData := vmem.InstData
@@ -44,12 +45,12 @@ class core(Config : JeriscvConfig) extends Module{
     IFU.In2F.BranchAddr := MEM.M2F.BranchAddr
     IFU.In2F.BranchFlag := MEM.M2F.BranchFlag
 
-    IDU.F2D := RegNext(IFU.F2D)
+    IDU.F2D := RegEnable(IFU.F2D, !Hazard.HazardFlag)
+    IDU.HazardFlag := Hazard.HazardFlag
 
     EX.D2E := RegNext(IDU.D2E)
     MEM.E2M := RegNext(EX.E2M)
     WB.M2W := RegNext(MEM.M2W)
-
     IDU.W2D := WB.W2D
 
     Bypass.E2B := EX.E2B
@@ -60,10 +61,12 @@ class core(Config : JeriscvConfig) extends Module{
 
     Hazard.F2D := IDU.F2D
     Hazard.D2E := EX.D2E
-    Hazard.JFlag := IDU.D2E.JFlag | EX.E2M.JFlag | MEM.E2M.JFlag
-    IFU.In2F.PCEnable := ~Hazard.HazardFlag
+
+    val JFlag = IDU.D2E.JFlag | EX.E2M.JFlag | MEM.E2M.JFlag
+    IFU.In2F.PCEnable := !(Hazard.HazardFlag | JFlag)
 
     BypassIO := Bypass.B2E
+    HazardFlag := Hazard.HazardFlag
   }
   else{
     IFU.In2F.PCEnable := true.B
@@ -80,6 +83,7 @@ class core(Config : JeriscvConfig) extends Module{
 
     EX.B2E := DontCare
     BypassIO := DontCare
+    HazardFlag := DontCare
   }
   io_o.m2w := MEM.M2W
   io_o.m2f := MEM.M2F
@@ -89,8 +93,8 @@ class core(Config : JeriscvConfig) extends Module{
   val InstAddr = IO(Output(UInt(Config.InstMemAddrWidth.W)))
 
   if(Config.DebugOutput){
-    InstData := IFU.F2D.InstData
-    InstAddr := IFU.F2D.InstAddr
+    InstData := IDU.F2D.InstData
+    InstAddr := IDU.F2D.InstAddr
   }else{
     InstData := DontCare
     InstAddr := DontCare

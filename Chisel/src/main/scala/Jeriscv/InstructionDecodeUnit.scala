@@ -49,6 +49,7 @@ object Op1SrcType extends ChiselEnum{
 
 class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
 
+  val HazardFlag = IO(Input(Bool()))
   val F2D = IO(Input(new Fetch2DecodeInterface(Config)))
   val W2D = IO(Input(new WriteBack2DecodeInterface(Config)))
   val D2E = IO(Output(new Decode2ExecuteInterface(Config)))
@@ -95,7 +96,7 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
 
   RegFile.io.rs_read := true.B
 
-  D2E.WriteBackEn := true.B
+  D2E.WriteBackEn := false.B
 
   // Decode2Execute Output
   D2E.Op1 := 0.U
@@ -165,6 +166,7 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   switch(exec_type){
     is(ExecuteType.ALUType){
       D2E.WriteBackSrc := WriteBackType.ALU
+      D2E.WriteBackEn := true.B
       when(inst_type === InstType.I_Type){
         op1src := Op1SrcType.rs1
         op2src := Op2SrcType.imm
@@ -191,12 +193,14 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
         D2E.WriteBackSrc := WriteBackType.NextAddr
         op1src := Op1SrcType.rs1
         op2src := Op2SrcType.imm
+        D2E.WriteBackEn := true.B
       }
       when(inst_type === InstType.J_Type){
         // JAL
         D2E.WriteBackSrc := WriteBackType.NextAddr
         op1src := Op1SrcType.zero
         op2src := Op2SrcType.imm
+        D2E.WriteBackEn := true.B
       }
       when(inst_type === InstType.B_Type){
         op1src := Op1SrcType.rs1
@@ -213,6 +217,7 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
         D2E.ALUFunct := ALUFunct3.add
         D2E.MemoryReadEnable := true.B
         D2E.MemoryWriteEnable := false.B
+        D2E.WriteBackEn := true.B
         D2E.WriteBackSrc := WriteBackType.Mem
       }
       when(inst_type === InstType.S_Type){
@@ -237,4 +242,26 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
     is(Op2SrcType.imm)      {D2E.Op2 := immGen}
   }
 
+  when(HazardFlag){
+    D2E.Op1 := 0.U
+    D2E.Op2 := 0.U
+    D2E.BranchOffset := 0.U
+    D2E.InstAddr := F2D.InstAddr
+
+    D2E.WriteBackDest := 0.U
+    D2E.WriteBackSrc := WriteBackType.default
+    D2E.ALUFunct := ALUFunct3.default
+    D2E.BRUFunct := BRUFunct3.default
+    D2E.LSUFunct := LSUFunct3.default
+    D2E.MemoryWriteData := 0.U
+
+    D2E.MemoryWriteEnable := false.B
+    D2E.MemoryReadEnable := false.B
+    D2E.WriteBackEn := false.B
+
+    D2E.rs1 := 0.U
+    D2E.rs2 := 0.U
+    D2E.op1src := Op1SrcType.default
+    D2E.op2src := Op2SrcType.default
+  }
 }

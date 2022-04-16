@@ -21,6 +21,8 @@ class DataMemBlackBox (MemSize : Int) extends BlackBox{
     val rdaddress = Input(UInt(log2Ceil(MemSize).W))
     val wraddress = Input(UInt(log2Ceil(MemSize).W))
     val wren = Input(Bool())
+    val rden = Input(Bool())
+    val rd_aclr = Input(Reset())
     val byteena_a = Input(UInt(4.W))
     val data = Input(UInt(32.W))
     val q = Output(UInt(32.W))

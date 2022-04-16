@@ -95,7 +95,8 @@ class ExecuteUnit(Config : JeriscvConfig) extends Module{
 
   // Unit Output
   E2M.LSUFunct := D2E.LSUFunct
-  E2M.MemoryWriteData := D2E.MemoryWriteData
+  E2M.MemoryWriteData := Mux(B2E.BypassOp2Flag, B2E.BypassOp2Data, D2E.MemoryWriteData)
+
   E2M.MemoryWriteEnable := D2E.MemoryWriteEnable
   E2M.MemoryReadEnable := D2E.MemoryReadEnable
 
