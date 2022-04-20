@@ -44,7 +44,7 @@ class MemoryUnit(Config : JeriscvConfig) extends Module {
     DMem.io.data := E2M.MemoryWriteData
     DMem.io.rdaddress := E2M.MemoryAddress(log2Ceil(Config.DataMemSize) - 1, 2)
     DMem.io.wraddress := E2M.MemoryAddress(log2Ceil(Config.DataMemSize) - 1, 2)
-    DMem.io.rdclock := clock
+    DMem.io.rdclock := (~clock.asUInt).asBool.asClock
     DMem.io.wrclock := (~clock.asUInt).asBool.asClock
     lsu.io.funct := E2M.LSUFunct
     lsu.io.byteaddr := E2M.MemoryAddress(1,0)
