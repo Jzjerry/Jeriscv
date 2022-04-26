@@ -52,15 +52,16 @@ class MemoryUnit(Config : JeriscvConfig) extends Module {
     M2W.MemoryReadData := lsu.io.LSUResult
   }
   else {
-    val DMem = Module(new DataMem(Config.DataMemSize, Config.SyncDataMem))
-    DMem.io.WriteLength := 0.U
+    val DMem = Module(new DataMem(Config.DataMemSize, Config.SyncDataMem, Config.DataMemFile))
+    DMem.io.ByteEnable := 0.U
     when(E2M.LSUFunct === LSUFunct3.sw) {
-      DMem.io.WriteLength := "b11".U
+      DMem.io.ByteEnable := "b1111".U
     }.elsewhen(E2M.LSUFunct === LSUFunct3.sh) {
-      DMem.io.WriteLength := "b01".U
+      DMem.io.ByteEnable := "b0011".U << E2M.MemoryAddress(1,0)
     }.elsewhen(E2M.LSUFunct === LSUFunct3.sb) {
-      DMem.io.WriteLength := "b00".U
+      DMem.io.ByteEnable := "b0001".U << E2M.MemoryAddress(1,0)
     }
+    DMem.clock := (~clock.asUInt).asBool.asClock
     DMem.io.WriteEn := E2M.MemoryWriteEnable
     DMem.io.ReadEn := E2M.MemoryReadEnable
     DMem.io.WriteData := E2M.MemoryWriteData

@@ -8,7 +8,7 @@ import chisel3.util.experimental.loadMemoryFromFileInline
 class DataMemInterface(MemSize : Int) extends Bundle{
   val Addr = Input(UInt(log2Ceil(MemSize).W))
   val WriteData = Input(UInt(32.W))
-  val WriteLength = Input(UInt(2.W))
+  val ByteEnable = Input(UInt(4.W))
   val ReadEn  = Input(Bool())
   val WriteEn = Input(Bool())
   val ReadData = Output(UInt(32.W))
@@ -48,13 +48,17 @@ class DataMem (MemSize : Int, MemSync : Boolean, memoryFile : String = "")extend
       mem.read(io.Addr)
     )
   }.elsewhen(io.WriteEn){
-    when( io.WriteLength(1) ){
+    when( io.ByteEnable(3) ){
       mem.write(io.Addr + 3.U, io.WriteData(31,24))
+    }
+    when( io.ByteEnable(2) ){
       mem.write(io.Addr + 2.U, io.WriteData(23,16))
     }
-    when( io.WriteLength(0) ) {
-      mem.write(io.Addr + 1.U, io.WriteData(15, 8))
+    when( io.ByteEnable(1) ) {
+      mem.write(io.Addr + 1.U, io.WriteData(15,8))
     }
-      mem.write(io.Addr, io.WriteData(7,0))
+    when( io.ByteEnable(0)) {
+      mem.write(io.Addr, io.WriteData(7, 0))
+    }
   }
 }
