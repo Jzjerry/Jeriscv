@@ -10,7 +10,7 @@ class Memory2WritebackInterface(Config : JeriscvConfig) extends Bundle{
 
   val MemoryReadData = UInt(Config.RegFileWidth.W)
 
-  val WriteBackData = UInt(Config.RegFileWidth.W)
+  val WriteBackSrc = WriteBackType()
   val WriteBackEn = Bool()
   val WriteBackDest = UInt(5.W)
 }
@@ -31,18 +31,20 @@ class MemoryUnit(Config : JeriscvConfig) extends Module {
   if(Config.DataMemBlackBox) {
     val DMem = Module(new DataMemBlackBox(Config.DataMemSize))
     DMem.io.byteena_a := 0xF.U
-    when(E2M.LSUFunct === LSUFunct3.sw || E2M.LSUFunct === LSUFunct3.lw) {
+    when(E2M.LSUFunct === LSUFunct3.sw) {
       DMem.io.byteena_a := 0xF.U
-    }.elsewhen(E2M.LSUFunct === LSUFunct3.sh || E2M.LSUFunct === LSUFunct3.lh || E2M.LSUFunct === LSUFunct3.lhu) {
+    }.elsewhen(E2M.LSUFunct === LSUFunct3.sh) {
       DMem.io.byteena_a := 0x3.U << E2M.MemoryAddress(1,0)
-    }.elsewhen(E2M.LSUFunct === LSUFunct3.sb || E2M.LSUFunct === LSUFunct3.lb || E2M.LSUFunct === LSUFunct3.lbu) {
+    }.elsewhen(E2M.LSUFunct === LSUFunct3.sb) {
       DMem.io.byteena_a := 0x1.U << E2M.MemoryAddress(1,0)
     }
-    DMem.io.wren := ~E2M.MemoryWriteEnable_n
+    DMem.io.wren := E2M.MemoryWriteEnable
+    DMem.io.rden := E2M.MemoryReadEnable
+    DMem.io.rd_aclr := reset
     DMem.io.data := E2M.MemoryWriteData
     DMem.io.rdaddress := E2M.MemoryAddress(log2Ceil(Config.DataMemSize) - 1, 2)
     DMem.io.wraddress := E2M.MemoryAddress(log2Ceil(Config.DataMemSize) - 1, 2)
-    DMem.io.rdclock := clock
+    DMem.io.rdclock := (~clock.asUInt).asBool.asClock
     DMem.io.wrclock := (~clock.asUInt).asBool.asClock
     lsu.io.funct := E2M.LSUFunct
     lsu.io.byteaddr := E2M.MemoryAddress(1,0)
@@ -50,18 +52,20 @@ class MemoryUnit(Config : JeriscvConfig) extends Module {
     M2W.MemoryReadData := lsu.io.LSUResult
   }
   else {
-    val DMem = Module(new DataMem(Config.DataMemSize, Config.SyncDataMem))
-    DMem.io.WriteLength := 0.U
+    val DMem = Module(new DataMem(Config.DataMemSize, Config.SyncDataMem, Config.DataMemFile))
+    DMem.io.ByteEnable := 0.U
     when(E2M.LSUFunct === LSUFunct3.sw) {
-      DMem.io.WriteLength := "b11".U
+      DMem.io.ByteEnable := "b1111".U
     }.elsewhen(E2M.LSUFunct === LSUFunct3.sh) {
-      DMem.io.WriteLength := "b01".U
+      DMem.io.ByteEnable := "b0011".U << E2M.MemoryAddress(1,0)
     }.elsewhen(E2M.LSUFunct === LSUFunct3.sb) {
-      DMem.io.WriteLength := "b00".U
+      DMem.io.ByteEnable := "b0001".U << E2M.MemoryAddress(1,0)
     }
-    DMem.io.ReadWrite := E2M.MemoryWriteEnable_n
+    DMem.clock := (~clock.asUInt).asBool.asClock
+    DMem.io.WriteEn := E2M.MemoryWriteEnable
+    DMem.io.ReadEn := E2M.MemoryReadEnable
     DMem.io.WriteData := E2M.MemoryWriteData
-    DMem.io.Addr := E2M.MemoryAddress
+    DMem.io.Addr := E2M.MemoryAddress(log2Ceil(Config.DataMemSize) - 1, 2)
 
     lsu.io.funct := E2M.LSUFunct
     lsu.io.byteaddr := E2M.MemoryAddress(1,0)
@@ -75,12 +79,7 @@ class MemoryUnit(Config : JeriscvConfig) extends Module {
 
   M2W.NextAddr := E2M.InstAddr + 4.U
 
-  M2W.WriteBackData :=
-    Mux(E2M.WriteBackSrc === WriteBackType.Mem, M2W.MemoryReadData,
-      Mux(E2M.WriteBackSrc === WriteBackType.ALU, M2W.ALUResult,
-        Mux(E2M.WriteBackSrc === WriteBackType.NextAddr, M2W.NextAddr, 0.U)))
-
   M2W.WriteBackEn := E2M.WriteBackEn
   M2W.WriteBackDest := E2M.WriteBackDest
-
+  M2W.WriteBackSrc := E2M.WriteBackSrc
 }

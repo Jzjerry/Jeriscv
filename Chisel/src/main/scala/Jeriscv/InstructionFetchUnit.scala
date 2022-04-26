@@ -1,5 +1,6 @@
 package Jeriscv
 
+import Jeriscv.ISA._
 import chisel3._
 import chisel3.util._
 import chisel3.experimental._
@@ -46,11 +47,13 @@ class InstructionFetchUnit(Config : JeriscvConfig) extends Module {
       InstMemBB.io.wren := false.B
       InstMemBB.io.data := 0.U
       F2D.InstData := Mux(In2F.PCEnable, InstMemBB.io.q, RV32I_ALU.NOP) // Bubble
+//      F2D.InstData := InstMemBB.io.q
     }
     else{
       val InstMem = Module(new InstructionMem(Config.InstMemSrc, Config.InstNum))
       InstMem.io.InstAddr := ProgramCounter
       F2D.InstData := Mux(In2F.PCEnable, InstMem.io.InstData, RV32I_ALU.NOP) // Bubble
+//      F2D.InstData := InstMem.io.InstData
     }
   }
   F2D.InstAddr := ProgramCounter

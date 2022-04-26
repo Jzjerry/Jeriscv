@@ -1,5 +1,6 @@
 package Jeriscv
 
+import Jeriscv.ISA._
 import chisel3._
 import chisel3.util._
 import chisel3.experimental.ChiselEnum
@@ -19,7 +20,8 @@ class Decode2ExecuteInterface (Config : JeriscvConfig) extends Bundle{
   val LSUFunct   = LSUFunct3()
 
   val MemoryWriteData = UInt(Config.RegFileWidth.W)
-  val MemoryWriteEnable_n = Bool()
+  val MemoryReadEnable = Bool()
+  val MemoryWriteEnable = Bool()
 
   val WriteBackDest = UInt(5.W)
   val WriteBackEn = Bool()
@@ -48,8 +50,9 @@ object Op1SrcType extends ChiselEnum{
 
 class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
 
+  val HazardFlag = IO(Input(Bool()))
   val F2D = IO(Input(new Fetch2DecodeInterface(Config)))
-  val W2D = IO(Input(new Memory2WritebackInterface(Config)))
+  val W2D = IO(Input(new WriteBack2DecodeInterface(Config)))
   val D2E = IO(Output(new Decode2ExecuteInterface(Config)))
 
   val RegFile = Module(new RegFile(Config.RegFileWidth))
@@ -74,13 +77,14 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
 
   // Immediate Generation
   val ImmTable = Array(
-    InstType.I_Type -> Cat(Fill(21,inst(31)), inst(30,20)),
-    InstType.S_Type -> Cat(Fill(21,inst(31)), inst(30,25), inst(11,7)),
-    InstType.B_Type -> Cat(Fill(20,inst(31)), inst(7), inst(30, 25), inst(11, 8), 0.U(1.W)),
-    InstType.U_Type -> Cat(inst(31, 12), 0.U(12.W)),
-    InstType.J_Type -> Cat(Fill(12,inst(31)), inst(19, 12), inst(20), inst(30, 21), 0.U(1.W))
+    InstType.I_Type.asUInt -> Cat(Fill(21,inst(31)), inst(30,20)),
+    InstType.S_Type.asUInt -> Cat(Fill(21,inst(31)), inst(30,25), inst(11,7)),
+    InstType.B_Type.asUInt -> Cat(Fill(20,inst(31)), inst(7), inst(30, 25), inst(11, 8), 0.U(1.W)),
+    InstType.U_Type.asUInt -> Cat(inst(31, 12), 0.U(12.W)),
+    InstType.J_Type.asUInt -> Cat(Fill(12,inst(31)), inst(19, 12), inst(20), inst(30, 21), 0.U(1.W))
   )
   val immGen = Wire(UInt(32.W))
+  immGen := MuxLookup(inst_type.asUInt, 0.U, ImmTable)
 
 
   // Default Wire
@@ -94,7 +98,7 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
 
   RegFile.io.rs_read := true.B
 
-  D2E.WriteBackEn := true.B
+  D2E.WriteBackEn := false.B
 
   // Decode2Execute Output
   D2E.Op1 := 0.U
@@ -108,7 +112,9 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   D2E.BRUFunct := BRUFunct3.default
   D2E.LSUFunct := LSUFunct3.default
   D2E.MemoryWriteData := RegFile.io.rs2_rdata
-  D2E.MemoryWriteEnable_n := true.B
+
+  D2E.MemoryWriteEnable := false.B
+  D2E.MemoryReadEnable := false.B
 
   // Bypassing Forward
   D2E.rs1 := rs1
@@ -117,7 +123,6 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   D2E.op2src := op2src
   D2E.JFlag := D2E.ExecType === ExecuteType.BRUType
 
-  immGen := 0.U
 
   // Enum default
   op1src := Op1SrcType.default
@@ -153,15 +158,10 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
 
   D2E.ExecType := exec_type
 
-  for(imm <- ImmTable){
-    when(inst_type === imm._1){
-      immGen := imm._2
-    }
-  }
-
   switch(exec_type){
     is(ExecuteType.ALUType){
       D2E.WriteBackSrc := WriteBackType.ALU
+      D2E.WriteBackEn := true.B
       when(inst_type === InstType.I_Type){
         op1src := Op1SrcType.rs1
         op2src := Op2SrcType.imm
@@ -188,12 +188,14 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
         D2E.WriteBackSrc := WriteBackType.NextAddr
         op1src := Op1SrcType.rs1
         op2src := Op2SrcType.imm
+        D2E.WriteBackEn := true.B
       }
       when(inst_type === InstType.J_Type){
         // JAL
         D2E.WriteBackSrc := WriteBackType.NextAddr
         op1src := Op1SrcType.zero
         op2src := Op2SrcType.imm
+        D2E.WriteBackEn := true.B
       }
       when(inst_type === InstType.B_Type){
         op1src := Op1SrcType.rs1
@@ -205,22 +207,25 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
       when(inst_type === InstType.I_Type) {
         // Load
         // Address Adding
-        D2E.WriteBackSrc := WriteBackType.Mem
         op1src := Op1SrcType.rs1
         op2src := Op2SrcType.imm
         D2E.ALUFunct := ALUFunct3.add
+        D2E.MemoryReadEnable := true.B
+        D2E.MemoryWriteEnable := false.B
+        D2E.WriteBackEn := true.B
+        D2E.WriteBackSrc := WriteBackType.Mem
       }
       when(inst_type === InstType.S_Type){
         // Store
         op1src := Op1SrcType.rs1
         op2src := Op2SrcType.imm
         D2E.ALUFunct := ALUFunct3.add
-        D2E.MemoryWriteEnable_n := false.B
+        D2E.MemoryWriteEnable := true.B
+        D2E.MemoryReadEnable := false.B
         D2E.WriteBackEn := false.B
       }
     }
   }
-
   switch(op1src){
     is(Op1SrcType.rs1)      {D2E.Op1 := RegFile.io.rs1_rdata}
     is(Op1SrcType.zero)     {D2E.Op1 := 0.U}
@@ -231,4 +236,26 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
     is(Op2SrcType.imm)      {D2E.Op2 := immGen}
   }
 
+  when(HazardFlag){
+    D2E.Op1 := 0.U
+    D2E.Op2 := 0.U
+    D2E.BranchOffset := 0.U
+    D2E.InstAddr := F2D.InstAddr
+
+    D2E.WriteBackDest := 0.U
+    D2E.WriteBackSrc := WriteBackType.default
+    D2E.ALUFunct := ALUFunct3.default
+    D2E.BRUFunct := BRUFunct3.default
+    D2E.LSUFunct := LSUFunct3.default
+    D2E.MemoryWriteData := 0.U
+
+    D2E.MemoryWriteEnable := false.B
+    D2E.MemoryReadEnable := false.B
+    D2E.WriteBackEn := false.B
+
+    D2E.rs1 := 0.U
+    D2E.rs2 := 0.U
+    D2E.op1src := Op1SrcType.default
+    D2E.op2src := Op2SrcType.default
+  }
 }

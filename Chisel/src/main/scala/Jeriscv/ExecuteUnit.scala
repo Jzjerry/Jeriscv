@@ -19,7 +19,8 @@ class Execute2MemInterface (Config : JeriscvConfig) extends Bundle{
   val LSUFunct = LSUFunct3()
   val MemoryWriteData = UInt(Config.RegFileWidth.W)
   val MemoryAddress = UInt(log2Ceil(Config.DataMemSize).W)
-  val MemoryWriteEnable_n = Bool()
+  val MemoryWriteEnable = Bool()
+  val MemoryReadEnable = Bool()
 
   val InstAddr = UInt(Config.InstMemAddrWidth.W)
 
@@ -94,8 +95,10 @@ class ExecuteUnit(Config : JeriscvConfig) extends Module{
 
   // Unit Output
   E2M.LSUFunct := D2E.LSUFunct
-  E2M.MemoryWriteData := D2E.MemoryWriteData
-  E2M.MemoryWriteEnable_n := D2E.MemoryWriteEnable_n
+  E2M.MemoryWriteData := Mux(B2E.BypassOp2Flag, B2E.BypassOp2Data, D2E.MemoryWriteData)
+
+  E2M.MemoryWriteEnable := D2E.MemoryWriteEnable
+  E2M.MemoryReadEnable := D2E.MemoryReadEnable
 
   E2M.InstAddr := D2E.InstAddr
   E2M.WriteBackSrc := D2E.WriteBackSrc

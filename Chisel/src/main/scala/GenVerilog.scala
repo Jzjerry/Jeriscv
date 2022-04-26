@@ -59,6 +59,8 @@ object GenCoreSynthesis{
     Config.InstMemBlackBox = true
     Config.DataMemBlackBox = true
     Config.SyncDataMem = false
+    Config.ALUOneHotOptimize = true
+    Config.BRUOneHotOptimize = true
     Config.SimplePipeline = true
     (new ChiselStage).emitVerilog(new core(Config))
   }
@@ -70,9 +72,11 @@ object GenCoreDebug{
     Config.VirtualInstMem = true
     Config.InstMemBlackBox = false
     Config.DataMemBlackBox = false
-    Config.SyncDataMem = false
+    Config.SyncDataMem = true
     Config.SimplePipeline = true
-    (new ChiselStage).emitVerilog(new core(Config))
+    Config.DataMemFile = "vsrc/mem/mem.hex"
+    val Stage = (new ChiselStage)
+    Stage.emitVerilog(new core(Config),Array("-o","core_debug.v"))
   }
 }
 
