@@ -47,7 +47,10 @@ class core(Config : JeriscvConfig) extends Module{
     IFU.In2F.BranchFlag := MEM.M2F.BranchFlag
 
     IDU.F2D := RegEnable(IFU.F2D, !Hazard.HazardFlag)
-    IDU.HazardFlag := Hazard.HazardFlag
+    IDU.Flush := Hazard.HazardFlag | MEM.M2F.BranchFlag
+    EX.Flush := MEM.M2F.BranchFlag
+    IFU.Flush := MEM.M2F.BranchFlag
+
 
     EX.D2E := RegNext(IDU.D2E)
     MEM.E2M := RegNext(EX.E2M)
@@ -68,10 +71,6 @@ class core(Config : JeriscvConfig) extends Module{
 
     BypassIO := Bypass.B2E
     HazardFlag := Hazard.HazardFlag
-  }
-  if(Config.DBusInterface){
-    val DBus = IO(Bus.AXI4LiteInterface(AXI4LiteConfig()))
-    DBus := MEM.DBus
   }
 
   io_o.m2w := MEM.M2W

@@ -18,6 +18,7 @@ class EndToFetchInterface(Config : JeriscvConfig) extends Bundle{
 
 class InstructionFetchUnit(Config : JeriscvConfig) extends Module {
 
+  val Flush = IO(Input(Bool()))
   val In2F = IO(Input(new EndToFetchInterface(Config)))
   val F2D = IO(Output(new Fetch2DecodeInterface(Config)))
   val vmem = IO(new Bundle{
@@ -36,7 +37,7 @@ class InstructionFetchUnit(Config : JeriscvConfig) extends Module {
 
   if(Config.VirtualInstMem){
     vmem.InstAddr := ProgramCounter
-    F2D.InstData := Mux(In2F.PCEnable, vmem.InstData, RV32I_ALU.NOP)
+    F2D.InstData := Mux(In2F.PCEnable & !Flush, vmem.InstData, RV32I_ALU.NOP)
   }
   else{
     vmem.InstAddr := DontCare
@@ -46,13 +47,13 @@ class InstructionFetchUnit(Config : JeriscvConfig) extends Module {
       InstMemBB.io.clock := (~clock.asUInt).asBool.asClock
       InstMemBB.io.wren := false.B
       InstMemBB.io.data := 0.U
-      F2D.InstData := Mux(In2F.PCEnable, InstMemBB.io.q, RV32I_ALU.NOP) // Bubble
+      F2D.InstData := Mux(In2F.PCEnable & !Flush, InstMemBB.io.q, RV32I_ALU.NOP) // Bubble
 //      F2D.InstData := InstMemBB.io.q
     }
     else{
       val InstMem = Module(new InstructionMem(Config.InstMemSrc, Config.InstNum))
       InstMem.io.InstAddr := ProgramCounter
-      F2D.InstData := Mux(In2F.PCEnable, InstMem.io.InstData, RV32I_ALU.NOP) // Bubble
+      F2D.InstData := Mux(In2F.PCEnable & !Flush, InstMem.io.InstData, RV32I_ALU.NOP) // Bubble
 //      F2D.InstData := InstMem.io.InstData
     }
   }

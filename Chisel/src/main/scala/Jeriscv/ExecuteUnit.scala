@@ -33,6 +33,7 @@ class Execute2MemInterface (Config : JeriscvConfig) extends Bundle{
 
 class ExecuteUnit(Config : JeriscvConfig) extends Module{
 
+  val Flush = IO(Input(Bool()))
   val B2E = IO(Input(new Bypass2ExecuteInterface(Config)))
   val D2E = IO(Input(new Decode2ExecuteInterface(Config)))
   val E2M = IO(Output(new Execute2MemInterface(Config)))
@@ -108,4 +109,29 @@ class ExecuteUnit(Config : JeriscvConfig) extends Module{
 
   E2B.rs1 := D2E.rs1
   E2B.rs2 := D2E.rs2
+
+  when(Flush){
+    E2M.ALUResult := 0.U
+    E2M.MemoryAddress := 0.U
+
+    // BRU Output
+    E2M.BranchAddr := 0.U
+    E2M.BranchFlag := false.B
+
+    // Unit Output
+    E2M.LSUFunct := LSUFunct3.default
+    E2M.MemoryWriteData := 0.U
+
+    E2M.MemoryWriteEnable := false.B
+    E2M.MemoryReadEnable := false.B
+
+    E2M.InstAddr := D2E.InstAddr
+    E2M.WriteBackSrc := WriteBackType.default
+    E2M.WriteBackDest := 0.U
+    E2M.WriteBackEn := false.B
+    E2M.JFlag := D2E.JFlag
+
+    E2B.rs1 := 0.U
+    E2B.rs2 := 0.U
+  }
 }

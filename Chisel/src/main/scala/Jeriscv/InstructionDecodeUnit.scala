@@ -50,7 +50,7 @@ object Op1SrcType extends ChiselEnum{
 
 class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
 
-  val HazardFlag = IO(Input(Bool()))
+  val Flush = IO(Input(Bool()))
   val F2D = IO(Input(new Fetch2DecodeInterface(Config)))
   val W2D = IO(Input(new WriteBack2DecodeInterface(Config)))
   val D2E = IO(Output(new Decode2ExecuteInterface(Config)))
@@ -121,7 +121,11 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   D2E.rs2 := rs2
   D2E.op1src := op1src
   D2E.op2src := op2src
-  D2E.JFlag := D2E.ExecType === ExecuteType.BRUType
+  if(Config.BranchFlush){
+    D2E.JFlag := inst_type === InstType.J_Type
+  }else{
+    D2E.JFlag := exec_type === ExecuteType.BRUType
+  }
 
 
   // Enum default
@@ -236,7 +240,7 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
     is(Op2SrcType.imm)      {D2E.Op2 := immGen}
   }
 
-  when(HazardFlag){
+  when(Flush){
     D2E.Op1 := 0.U
     D2E.Op2 := 0.U
     D2E.BranchOffset := 0.U

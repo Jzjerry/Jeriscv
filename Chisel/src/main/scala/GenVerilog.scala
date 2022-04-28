@@ -73,6 +73,7 @@ object GenCoreDebug{
     Config.InstMemBlackBox = false
     Config.DataMemBlackBox = false
     Config.SyncDataMem = true
+    Config.BranchFlush = true
     Config.SimplePipeline = true
     Config.DataMemFile = "vsrc/mem/mem.hex"
     val Stage = (new ChiselStage)

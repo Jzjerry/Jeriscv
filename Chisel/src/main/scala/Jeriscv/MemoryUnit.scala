@@ -26,10 +26,9 @@ class MemoryUnit(Config : JeriscvConfig) extends Module {
   val E2M = IO(Input(new Execute2MemInterface(Config)))
   val M2W = IO(Output(new Memory2WritebackInterface(Config)))
   val M2F = IO(Output(new Memory2FetchInterface(Config)))
-  val DBus = IO(AXI4LiteInterface(AXI4LiteConfig()))
+//  val DBus = IO(AXI4LiteInterface(AXI4LiteConfig()))
 
   val lsu = Module(new LSU(Config.RegFileWidth))
-
 
   if(Config.DBusInterface) {
 
@@ -51,10 +50,8 @@ class MemoryUnit(Config : JeriscvConfig) extends Module {
     DMem.io.wraddress := E2M.MemoryAddress(log2Ceil(Config.DataMemSize) - 1, 2)
     DMem.io.rdclock := (~clock.asUInt).asBool.asClock
     DMem.io.wrclock := (~clock.asUInt).asBool.asClock
-    lsu.io.funct := E2M.LSUFunct
-    lsu.io.byteaddr := E2M.MemoryAddress(1,0)
+
     lsu.io.mem_data := DMem.io.q
-    M2W.MemoryReadData := lsu.io.LSUResult
   }
   else {
     val DMem = Module(new DataMem(Config.DataMemSize, Config.SyncDataMem, Config.DataMemFile))
@@ -72,11 +69,12 @@ class MemoryUnit(Config : JeriscvConfig) extends Module {
     DMem.io.WriteData := E2M.MemoryWriteData
     DMem.io.Addr := E2M.MemoryAddress(log2Ceil(Config.DataMemSize) - 1, 2)
 
-    lsu.io.funct := E2M.LSUFunct
-    lsu.io.byteaddr := E2M.MemoryAddress(1,0)
     lsu.io.mem_data := DMem.io.ReadData
-    M2W.MemoryReadData := lsu.io.LSUResult
   }
+
+  lsu.io.funct := E2M.LSUFunct
+  lsu.io.byteaddr := E2M.MemoryAddress(1,0)
+  M2W.MemoryReadData := lsu.io.LSUResult
   // Stage Output
   M2W.ALUResult := E2M.ALUResult
   M2F.BranchAddr := E2M.BranchAddr
