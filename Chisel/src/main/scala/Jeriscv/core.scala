@@ -2,6 +2,7 @@ package Jeriscv
 
 /* Single Cycle Non-Pipeline Version */
 
+import Jeriscv.Bus.AXI4LiteConfig
 import chisel3._
 import chisel3.util._
 import Jeriscv.Pipeline._
@@ -68,23 +69,11 @@ class core(Config : JeriscvConfig) extends Module{
     BypassIO := Bypass.B2E
     HazardFlag := Hazard.HazardFlag
   }
-  else{
-    IFU.In2F.PCEnable := true.B
-    IFU.In2F.BranchAddr := (MEM.M2F.BranchAddr)
-    IFU.In2F.BranchFlag := (MEM.M2F.BranchFlag)
-
-    IDU.F2D := (IFU.F2D)
-    EX.D2E := (IDU.D2E)
-    MEM.E2M := (EX.E2M)
-
-    WB.M2W := MEM.M2W
-
-    IDU.W2D := (WB.W2D)
-
-    EX.B2E := DontCare
-    BypassIO := DontCare
-    HazardFlag := DontCare
+  if(Config.DBusInterface){
+    val DBus = IO(Bus.AXI4LiteInterface(AXI4LiteConfig()))
+    DBus := MEM.DBus
   }
+
   io_o.m2w := MEM.M2W
   io_o.m2f := MEM.M2F
   io_o.w2d := WB.W2D

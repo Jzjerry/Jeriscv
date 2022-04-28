@@ -1,8 +1,8 @@
 package Jeriscv
 
+import Jeriscv.ISA._
 import chisel3._
 import chisel3.util._
-
 import Jeriscv.Pipeline._
 
 class Execute2BypassInterface(Config: JeriscvConfig) extends Bundle{

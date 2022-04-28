@@ -1,5 +1,6 @@
 package Jeriscv
 
+import Jeriscv.Bus._
 import chisel3._
 import chisel3.util._
 
@@ -25,10 +26,14 @@ class MemoryUnit(Config : JeriscvConfig) extends Module {
   val E2M = IO(Input(new Execute2MemInterface(Config)))
   val M2W = IO(Output(new Memory2WritebackInterface(Config)))
   val M2F = IO(Output(new Memory2FetchInterface(Config)))
+  val DBus = IO(AXI4LiteInterface(AXI4LiteConfig()))
 
   val lsu = Module(new LSU(Config.RegFileWidth))
 
-  if(Config.DataMemBlackBox) {
+
+  if(Config.DBusInterface) {
+
+  } else if(Config.DataMemBlackBox) {
     val DMem = Module(new DataMemBlackBox(Config.DataMemSize))
     DMem.io.byteena_a := 0xF.U
     when(E2M.LSUFunct === LSUFunct3.sw) {
@@ -72,13 +77,11 @@ class MemoryUnit(Config : JeriscvConfig) extends Module {
     lsu.io.mem_data := DMem.io.ReadData
     M2W.MemoryReadData := lsu.io.LSUResult
   }
+  // Stage Output
   M2W.ALUResult := E2M.ALUResult
-
   M2F.BranchAddr := E2M.BranchAddr
   M2F.BranchFlag := E2M.BranchFlag
-
   M2W.NextAddr := E2M.InstAddr + 4.U
-
   M2W.WriteBackEn := E2M.WriteBackEn
   M2W.WriteBackDest := E2M.WriteBackDest
   M2W.WriteBackSrc := E2M.WriteBackSrc

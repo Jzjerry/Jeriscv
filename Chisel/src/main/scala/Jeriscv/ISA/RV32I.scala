@@ -1,6 +1,6 @@
 package Jeriscv.ISA
 
-import Jeriscv.{ALUFunct3, BRUFunct3, LSUFunct3}
+import Jeriscv._
 import chisel3._
 import chisel3.experimental._
 import chisel3.util._
