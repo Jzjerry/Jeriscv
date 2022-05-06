@@ -13,6 +13,9 @@ class JeriscvConfig{
   var DBusInterface     : Boolean = false
   var IBusInterface     : Boolean = false
 
+  var BusAddrWidth      : Int = 32
+  var BusDataWidth      : Int = 32
+
   var BranchFlush       : Boolean = true
 
   var DataMemSize       : Int = 4096
@@ -27,5 +30,9 @@ class JeriscvConfig{
   var ALUOneHotOptimize       : Boolean = true
   var BRUOneHotOptimize       : Boolean = true
 
-  var SimplePipeline          : Boolean = false
+  var SimplePipeline          : Boolean = true
+  var HasRV32M                : Boolean = true
+  var HasMul                  : Boolean = true
+  var HasDiv                  : Boolean = false // Don't open it
+  var HasRem                  : Boolean = false // Don't open it
 }

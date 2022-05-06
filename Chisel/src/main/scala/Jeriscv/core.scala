@@ -2,14 +2,12 @@ package Jeriscv
 
 /* Single Cycle Non-Pipeline Version */
 
-import Jeriscv.Bus.AXI4LiteConfig
 import chisel3._
 import chisel3.util._
 import Jeriscv.Pipeline._
 
 class core(Config : JeriscvConfig) extends Module{
 
-//  val io_i = IO(Input(new EndToFetchInterface(Config)))
   val io_o = IO(Output(new Bundle{
     val m2w = new Memory2WritebackInterface(Config)
     val m2f = new Memory2FetchInterface(Config)

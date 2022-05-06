@@ -41,6 +41,7 @@ class ExecuteUnit(Config : JeriscvConfig) extends Module{
 
   val alu = Module(new ALU(Config.RegFileWidth, Config.ALUOneHotOptimize))
   val bru = Module(new BRU(Config.RegFileWidth, Config.InstMemAddrWidth, Config.BRUOneHotOptimize))
+  val mdu = if(Config.HasRV32M) Module(new MDU(Config)) else null
 
   val Op1 = Wire(UInt(Config.RegFileWidth.W))
   val Op2 = Wire(UInt(Config.RegFileWidth.W))
@@ -66,6 +67,12 @@ class ExecuteUnit(Config : JeriscvConfig) extends Module{
   bru.io.InstAddr := 0.U
   bru.io.funct := BRUFunct3.default
 
+  if(Config.HasRV32M){
+    mdu.io.op1 := 0.U
+    mdu.io.op2 := 0.U
+    mdu.io.funct3 := MULDIVFunct3.default
+  }
+
   switch(D2E.ExecType){
     is(ExecuteType.ALUType){
       alu.io.op1 := Op1
@@ -86,8 +93,16 @@ class ExecuteUnit(Config : JeriscvConfig) extends Module{
     }
   }
 
+  if(Config.HasRV32M) {
+    when(D2E.ExecType === ExecuteType.MDUType){
+      mdu.io.op1 := Op1
+      mdu.io.op2 := Op2
+      mdu.io.funct3 := D2E.MDUFunct
+    }
+  }
   // ALU Output
-  E2M.ALUResult := alu.io.result
+  E2M.ALUResult :=  alu.io.result
+  if(Config.HasRV32M) {when(D2E.ExecType === ExecuteType.MDUType) { E2M.ALUResult :=  mdu.io.result }}
   E2M.MemoryAddress := alu.io.result
 
   // BRU Output

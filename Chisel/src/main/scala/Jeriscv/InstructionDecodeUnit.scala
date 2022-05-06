@@ -18,6 +18,7 @@ class Decode2ExecuteInterface (Config : JeriscvConfig) extends Bundle{
   val ALUFunct   = ALUFunct3()
   val BRUFunct   = BRUFunct3()
   val LSUFunct   = LSUFunct3()
+  val MDUFunct   = if(Config.HasRV32M) MULDIVFunct3() else null
 
   val MemoryWriteData = UInt(Config.RegFileWidth.W)
   val MemoryReadEnable = Bool()
@@ -111,6 +112,7 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   D2E.ALUFunct := ALUFunct3.default
   D2E.BRUFunct := BRUFunct3.default
   D2E.LSUFunct := LSUFunct3.default
+  if(Config.HasRV32M )D2E.MDUFunct := MULDIVFunct3.default
   D2E.MemoryWriteData := RegFile.io.rs2_rdata
 
   D2E.MemoryWriteEnable := false.B
@@ -160,6 +162,17 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
     }
   }
 
+  // MDU Decode Generate
+  if(Config.HasRV32M) {
+    for (elem <- RV32M.table) {
+      when(inst === elem._1) {
+        inst_type := elem._2.head
+        exec_type := elem._2(1)
+        D2E.MDUFunct := elem._2.last
+      }
+    }
+  }
+
   D2E.ExecType := exec_type
 
   switch(exec_type){
@@ -180,6 +193,14 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
           op2src := Op2SrcType.imm
         }
       }
+      when(inst_type === InstType.R_Type){
+        op1src := Op1SrcType.rs1
+        op2src := Op2SrcType.rs2
+      }
+    }
+    is(ExecuteType.MDUType){
+      D2E.WriteBackSrc := WriteBackType.ALU
+      D2E.WriteBackEn := true.B
       when(inst_type === InstType.R_Type){
         op1src := Op1SrcType.rs1
         op2src := Op2SrcType.rs2
