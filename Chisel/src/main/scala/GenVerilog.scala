@@ -11,7 +11,7 @@ object GenInstMem{
 
 object GenDataMem{
   def main(args: Array[String]): Unit = {
-    (new ChiselStage).emitVerilog(new DataMem(256, true))
+    (new ChiselStage).emitVerilog(new DataMem(256, ""))
   }
 }
 
@@ -57,8 +57,8 @@ object GenCoreSynthesis{
     Config.DebugOutput = true
     Config.VirtualInstMem = false
     Config.InstMemBlackBox = true
-    Config.DataMemBlackBox = true
-    Config.SyncDataMem = false
+    Config.DataMemBlackBox = false
+    Config.SyncDataMem = true
     Config.ALUOneHotOptimize = true
     Config.BRUOneHotOptimize = true
     Config.SimplePipeline = true

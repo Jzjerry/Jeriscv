@@ -1,7 +1,10 @@
 package Jeriscv
 
+import chisel3._
+import chisel3.util._
+import Jeriscv.Peripheral._
 
-class JeriscvConfig{
+class JeriscvConfig {
 
   var DebugOutput       : Boolean = true
   var VirtualInstMem    : Boolean = false
@@ -20,7 +23,7 @@ class JeriscvConfig{
 
   var DataMemSize       : Int = 4096
   var DataMemBlackBox   : Boolean = true
-  var SyncDataMem       : Boolean = false
+  var SyncDataMem       : Boolean = true
   var DataMemFile       : String = ""
 
   var InstNum           : Int = 256
@@ -31,8 +34,9 @@ class JeriscvConfig{
   var BRUOneHotOptimize       : Boolean = true
 
   var SimplePipeline          : Boolean = true
-  var HasRV32M                : Boolean = true
-  var HasMul                  : Boolean = true
+  var HasRV32M                : Boolean = false
+  var HasMul                  : Boolean = false
   var HasDiv                  : Boolean = false // Don't open it
   var HasRem                  : Boolean = false // Don't open it
+
 }

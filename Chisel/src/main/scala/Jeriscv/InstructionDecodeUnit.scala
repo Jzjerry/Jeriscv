@@ -136,7 +136,6 @@ class InstructionDecodeUnit(Config : JeriscvConfig) extends Module {
   inst_type := InstType.default
   exec_type := ExecuteType.default
 
-
   // ALU Decode Generate
   for(elem <- RV32I_ALU.table){
     when(inst === elem._1){

@@ -16,12 +16,6 @@ class Execute2MemInterface (Config : JeriscvConfig) extends Bundle{
   val BranchFlag = Bool()
   val BranchAddr = UInt(Config.InstMemAddrWidth.W)
 
-  val LSUFunct = LSUFunct3()
-  val MemoryWriteData = UInt(Config.RegFileWidth.W)
-  val MemoryAddress = UInt(log2Ceil(Config.DataMemSize).W)
-  val MemoryWriteEnable = Bool()
-  val MemoryReadEnable = Bool()
-
   val InstAddr = UInt(Config.InstMemAddrWidth.W)
 
   val WriteBackDest = UInt(5.W)
@@ -31,12 +25,21 @@ class Execute2MemInterface (Config : JeriscvConfig) extends Bundle{
   val JFlag = Bool()
 }
 
+class Execute2MemNoDelayInterface (Config : JeriscvConfig) extends Bundle{
+  val LSUFunct = LSUFunct3()
+  val MemoryWriteData = UInt(Config.RegFileWidth.W)
+  val MemoryAddress = UInt(Config.BusAddrWidth.W)
+  val MemoryWriteEnable = Bool()
+  val MemoryReadEnable = Bool()
+}
+
 class ExecuteUnit(Config : JeriscvConfig) extends Module{
 
   val Flush = IO(Input(Bool()))
   val B2E = IO(Input(new Bypass2ExecuteInterface(Config)))
   val D2E = IO(Input(new Decode2ExecuteInterface(Config)))
   val E2M = IO(Output(new Execute2MemInterface(Config)))
+  val E2MD = IO(Output(new Execute2MemNoDelayInterface(Config)))
   val E2B = IO(Output(new Execute2BypassInterface(Config)))
 
   val alu = Module(new ALU(Config.RegFileWidth, Config.ALUOneHotOptimize))
@@ -103,18 +106,18 @@ class ExecuteUnit(Config : JeriscvConfig) extends Module{
   // ALU Output
   E2M.ALUResult :=  alu.io.result
   if(Config.HasRV32M) {when(D2E.ExecType === ExecuteType.MDUType) { E2M.ALUResult :=  mdu.io.result }}
-  E2M.MemoryAddress := alu.io.result
+  E2MD.MemoryAddress := alu.io.result
 
   // BRU Output
   E2M.BranchAddr := bru.io.BranchAddr
   E2M.BranchFlag := bru.io.BranchFlag
 
   // Unit Output
-  E2M.LSUFunct := D2E.LSUFunct
-  E2M.MemoryWriteData := Mux(B2E.BypassOp2Flag, B2E.BypassOp2Data, D2E.MemoryWriteData)
+  E2MD.LSUFunct := D2E.LSUFunct
+  E2MD.MemoryWriteData := Mux(B2E.BypassOp2Flag, B2E.BypassOp2Data, D2E.MemoryWriteData)
 
-  E2M.MemoryWriteEnable := D2E.MemoryWriteEnable
-  E2M.MemoryReadEnable := D2E.MemoryReadEnable
+  E2MD.MemoryWriteEnable := D2E.MemoryWriteEnable
+  E2MD.MemoryReadEnable := D2E.MemoryReadEnable
 
   E2M.InstAddr := D2E.InstAddr
   E2M.WriteBackSrc := D2E.WriteBackSrc
@@ -127,18 +130,18 @@ class ExecuteUnit(Config : JeriscvConfig) extends Module{
 
   when(Flush){
     E2M.ALUResult := 0.U
-    E2M.MemoryAddress := 0.U
+    E2MD.MemoryAddress := 0.U
 
     // BRU Output
     E2M.BranchAddr := 0.U
     E2M.BranchFlag := false.B
 
     // Unit Output
-    E2M.LSUFunct := LSUFunct3.default
-    E2M.MemoryWriteData := 0.U
+    E2MD.LSUFunct := LSUFunct3.default
+    E2MD.MemoryWriteData := 0.U
 
-    E2M.MemoryWriteEnable := false.B
-    E2M.MemoryReadEnable := false.B
+    E2MD.MemoryWriteEnable := false.B
+    E2MD.MemoryReadEnable := false.B
 
     E2M.InstAddr := D2E.InstAddr
     E2M.WriteBackSrc := WriteBackType.default

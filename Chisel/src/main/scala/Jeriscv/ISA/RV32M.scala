@@ -30,5 +30,4 @@ object RV32M {
     REM     ->    List(InstType.R_Type, ExecuteType.MDUType, MULDIVFunct3.rem),
     REMU    ->    List(InstType.R_Type, ExecuteType.MDUType, MULDIVFunct3.remu),
   )
-
 }
