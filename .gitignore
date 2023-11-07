@@ -2,3 +2,4 @@ Verilog/quartus
 *.vcd
 *.bak
 wave
+.vscode
