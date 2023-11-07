@@ -3,3 +3,4 @@ Verilog/quartus
 *.bak
 wave
 .vscode
+.metals
