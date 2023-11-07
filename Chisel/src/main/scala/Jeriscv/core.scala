@@ -8,12 +8,13 @@ import Jeriscv.Pipeline._
 
 class core(Config : JeriscvConfig) extends Module{
 
-//  val io_i = IO(Input(new EndToFetchInterface(Config)))
-  val io_o = IO(Output(new Bundle{
-    val m2w = new Memory2WritebackInterface(Config)
-    val m2f = new Memory2FetchInterface(Config)
-    val w2d = new WriteBack2DecodeInterface(Config)
-  }))
+  val io_o = if(Config.DebugOutput){
+    IO(Output(new Bundle {
+      val m2w = new Memory2WritebackInterface(Config)
+      val m2f = new Memory2FetchInterface(Config)
+      val w2d = new WriteBack2DecodeInterface(Config)
+    }))
+  } else null
 
   val IFU = Module(new InstructionFetchUnit(Config))
   val IDU = Module(new InstructionDecodeUnit(Config))
@@ -46,10 +47,14 @@ class core(Config : JeriscvConfig) extends Module{
     IFU.In2F.BranchFlag := MEM.M2F.BranchFlag
 
     IDU.F2D := RegEnable(IFU.F2D, !Hazard.HazardFlag)
-    IDU.HazardFlag := Hazard.HazardFlag
+    IDU.Flush := Hazard.HazardFlag | MEM.M2F.BranchFlag
+    EX.Flush := MEM.M2F.BranchFlag
+    IFU.Flush := MEM.M2F.BranchFlag
+
 
     EX.D2E := RegNext(IDU.D2E)
     MEM.E2M := RegNext(EX.E2M)
+    MEM.E2MD := EX.E2MD
     WB.M2W := RegNext(MEM.M2W)
     IDU.W2D := WB.W2D
 
@@ -68,35 +73,15 @@ class core(Config : JeriscvConfig) extends Module{
     BypassIO := Bypass.B2E
     HazardFlag := Hazard.HazardFlag
   }
-  else{
-    IFU.In2F.PCEnable := true.B
-    IFU.In2F.BranchAddr := (MEM.M2F.BranchAddr)
-    IFU.In2F.BranchFlag := (MEM.M2F.BranchFlag)
 
-    IDU.F2D := (IFU.F2D)
-    EX.D2E := (IDU.D2E)
-    MEM.E2M := (EX.E2M)
-
-    WB.M2W := MEM.M2W
-
-    IDU.W2D := (WB.W2D)
-
-    EX.B2E := DontCare
-    BypassIO := DontCare
-    HazardFlag := DontCare
-  }
-  io_o.m2w := MEM.M2W
-  io_o.m2f := MEM.M2F
-  io_o.w2d := WB.W2D
-
-  val InstData = IO(Output(UInt(32.W)))
-  val InstAddr = IO(Output(UInt(Config.InstMemAddrWidth.W)))
+  val InstData = if(Config.DebugOutput) IO(Output(UInt(32.W))) else null
+  val InstAddr = if(Config.DebugOutput) IO(Output(UInt(Config.InstMemAddrWidth.W))) else null
 
   if(Config.DebugOutput){
     InstData := IDU.F2D.InstData
     InstAddr := IDU.F2D.InstAddr
-  }else{
-    InstData := DontCare
-    InstAddr := DontCare
+    io_o.m2w := MEM.M2W
+    io_o.m2f := MEM.M2F
+    io_o.w2d := WB.W2D
   }
 }

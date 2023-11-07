@@ -1,6 +1,6 @@
 package Jeriscv.ISA
 
-import Jeriscv.{ALUFunct3, BRUFunct3, LSUFunct3}
+import Jeriscv._
 import chisel3._
 import chisel3.experimental._
 import chisel3.util._
@@ -9,7 +9,7 @@ object InstType extends ChiselEnum{
   val R_Type, I_Type, S_Type, B_Type, U_Type, J_Type, default = Value
 }
 object ExecuteType extends ChiselEnum{
-  val ALUType, BRUType, LSUType, default = Value
+  val ALUType, BRUType, LSUType, MDUType, default = Value
 }
 
 object RV32I_ALU {
